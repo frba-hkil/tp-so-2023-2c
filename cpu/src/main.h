@@ -4,3 +4,6 @@
 #include <commons/string.h>
 #include <commons/log.h>
 #include <commons/error.h>
+
+
+void processInstruction(char *code);
