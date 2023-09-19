@@ -50,3 +50,29 @@ void procesarInstrucciones(char *codigo) {
         i++;
     } 
 }
+
+void set_registro(t_pcb *pcb, char *reg, u_int32_t val) {
+    if (reg[0] == 'A') 
+        pcb->AX = val;
+    else if(reg[0] == 'B') 
+        pcb->BX = val;
+    else if(reg[0] == 'C') 
+        pcb->CX = val;
+    else if(reg[0] == 'D') 
+        pcb->DX = val;
+}
+
+ 
+uint32_t get_registro(t_pcb *pcb, char *reg) {
+    if (reg[0] == 'A') 
+        return pcb->AX;
+    else if(reg[0] == 'B') 
+        return pcb->BX;
+    else if(reg[0] == 'C') 
+        return pcb->CX;
+    else if(reg[0] == 'D') 
+        return pcb->DX;
+
+    return 0;
+}
+
