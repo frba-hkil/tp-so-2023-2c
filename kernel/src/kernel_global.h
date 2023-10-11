@@ -12,7 +12,10 @@
 #include <estructuras.h>
 #include <serializador.h>
 #include <conexiones.h>
+#include <cliente.h>
 #include "kernel_config.h"
+#include "kernel_conexiones.h"
+#include "consola.h"
 
 // Kernel
 t_log *kernel_logger;
@@ -20,6 +23,7 @@ t_kernel_config *kernel_config;
 int socket_cpu_interrupt;
 int socket_cpu_dispatch;
 int socket_memoria;
+void (*command_handlers[CANT_MAX_COMANDOS])() = {};
 
 // Planificador Largo Plazo
 uint32_t generador_de_id;
