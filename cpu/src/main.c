@@ -8,6 +8,10 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    int socket_dispatch = iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_DISPATCH"));
+    int socket_interrupt = iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_INTERRUPT"));
+    int socket_memoria = crear_conexion(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"));
+
     // TEST 
 
     //t_pcb *testPcb = crear_pcb(1, 1, list_create(), 1, 1);
