@@ -2,8 +2,8 @@
 #define KERNEL_GLOBAL_H_
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
+//#include <stdlib.h>
+//#include <pthread.h>
 #include <semaphore.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
@@ -14,7 +14,6 @@
 #include <conexiones.h>
 #include <cliente.h>
 #include "kernel_config.h"
-#include "kernel_conexiones.h"
 #include "consola.h"
 
 // Kernel
@@ -23,7 +22,13 @@ t_kernel_config *kernel_config;
 int socket_cpu_interrupt;
 int socket_cpu_dispatch;
 int socket_memoria;
-void (*command_handlers[CANT_MAX_COMANDOS])() = {};
+int sockets[4]; /*
+sockets[0] = cpu_dispatch,
+sockets[1] = cpu_interrupt,
+sockets[2] = memoria,
+sockets[3] = filesystem
+*/
+void (*command_handlers[6])(char* parametros);
 
 // Planificador Largo Plazo
 uint32_t generador_de_id;

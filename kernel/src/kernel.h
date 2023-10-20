@@ -1,7 +1,9 @@
 #ifndef KERNEL_H_
 #define KERNEL_H_
 
-#include "kernel_global.h"
+#include "kernel_conexiones.h"
+//#include "consola.h"
+
 //#include "gestionar_consola.h"
 //#include "planificador.h"
 

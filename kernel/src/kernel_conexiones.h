@@ -3,6 +3,6 @@
 
 #include "kernel_global.h"
 
-void iniciar_conexiones_kernel(void);
+void iniciar_conexiones_kernel(int*);
 
 #endif /* SRC_KERNEL_CONEXIONES_H_ */

@@ -12,8 +12,9 @@ int main(int argc, char* argv[]) {
     log_info(kernel_logger, "Hello world!!");
     log_info(kernel_logger, kernel_config->recursos);
 
-    iniciar_conexiones_kernel();
+    iniciar_conexiones_kernel(sockets);
     iniciar_consola();
+
     /*
     int socket_kernel = iniciar_modulo_servidor(kernel_config->ip_kernel, kernel_config->puerto_escucha, kernel_logger);
 
@@ -28,3 +29,4 @@ int main(int argc, char* argv[]) {
     puts("Hello world!!");
     return EXIT_SUCCESS;
 }
+
