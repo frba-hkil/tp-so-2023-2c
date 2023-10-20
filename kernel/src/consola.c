@@ -23,12 +23,14 @@ void console_handler(void){
 	while(1){
 		parametros = string_array_new();
 		input = readline(">>");
+		if(input)
+			add_history(input);
 
 		char **s = string_n_split(input, 2," ");
 
 		if(s[1] != NULL){
 			parametros = string_n_split(s[1], 3, " ");
-			string_iterate_lines(parametros, &printf);
+			//string_iterate_lines(parametros, &print_param);
 		}
 		else{
 			printf("parametro vacio\n");
@@ -47,16 +49,23 @@ void ejecutar_comando(char* input, char** parametros){
 	while(i < 6){
 		if(string_equals_ignore_case(input, comandos[i])){
 			//(*command_handlers[i])(parametros);
-			printf("\ninstruccion encontrado: %s\n", comandos[i]);
+			log_info(kernel_logger, "comando encontrado: %s", comandos[i]);
+			//printf("\ncomando encontrado: %s\n", comandos[i]);
 			break;
 		}
 		i++;
 	}
-	if(i >= 6)
-		printf("\ninstruccion no existe\n");
+	if(i >= 6){
+		log_error(kernel_logger, "comando no existe")
+		//printf("\ncomando no existe\n");
+	}
+}
+
+void print_param(char* param){
+	printf("%s ", param);
 }
 
 int iniciar_proceso(char** parametros){
-
+	return 0;
 }
 

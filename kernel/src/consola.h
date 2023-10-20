@@ -29,6 +29,6 @@ void* console_routine(void*);
 
 void ejecutar_comando(char* input, char** parametros);
 
-
+void print_param(char*);
 
 #endif /* SRC_CONSOLA_H_ */
