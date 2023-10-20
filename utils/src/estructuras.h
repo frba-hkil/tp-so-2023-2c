@@ -44,6 +44,10 @@ typedef struct {
 	uint32_t program_counter;
 	uint32_t tabla_paginas;
 	uint32_t estimacion_rafaga;
+	uint32_t AX;
+	uint32_t BX;
+	uint32_t CX;
+	uint32_t DX;
 } t_pcb;
 
 typedef struct {
