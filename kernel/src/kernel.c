@@ -14,6 +14,7 @@ int main(int argc, char* argv[]) {
 
     //iniciar_conexiones_kernel(sockets);
     iniciar_consola();
+    //iniciar_planificador();
 
     /*
     int socket_kernel = iniciar_modulo_servidor(kernel_config->ip_kernel, kernel_config->puerto_escucha, kernel_logger);

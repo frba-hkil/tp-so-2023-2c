@@ -3,12 +3,15 @@
 
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <commons/log.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <commons/collections/list.h>
 #include <commons/string.h>
 
 #define CANT_MAX_COMANDOS 6
+
+extern t_log *kernel_logger;
 
 typedef enum{
 	INICIAR_PROCESO,

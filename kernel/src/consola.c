@@ -56,7 +56,7 @@ void ejecutar_comando(char* input, char** parametros){
 		i++;
 	}
 	if(i >= 6){
-		log_error(kernel_logger, "comando no existe")
+		log_error(kernel_logger, "comando no existe");
 		//printf("\ncomando no existe\n");
 	}
 }
@@ -65,7 +65,4 @@ void print_param(char* param){
 	printf("%s ", param);
 }
 
-int iniciar_proceso(char** parametros){
-	return 0;
-}
 

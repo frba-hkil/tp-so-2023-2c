@@ -23,12 +23,12 @@ t_consola *deserializar_consola(t_paquete *paquete) {
 }
 
 t_paquete *serializar_pcb(t_pcb *pcb, t_protocolo protocolo) {
-	t_paquete *paquete = serializar_instrucciones(pcb->instrucciones, protocolo);
-	agregar_a_paquete(paquete, &(pcb->id), sizeof(uint32_t));
+	t_paquete *paquete = serializar_instrucciones(pcb->contexto->instrucciones, protocolo);
+	agregar_a_paquete(paquete, &(pcb->contexto->pid), sizeof(uint32_t));
 	agregar_a_paquete(paquete, &(pcb->tamanio_proceso), sizeof(uint32_t));
-	agregar_a_paquete(paquete, &(pcb->program_counter), sizeof(uint32_t));
-	agregar_a_paquete(paquete, &(pcb->tabla_paginas), sizeof(uint32_t));
-	agregar_a_paquete(paquete, &(pcb->estimacion_rafaga), sizeof(uint32_t));
+	agregar_a_paquete(paquete, &(pcb->contexto->program_counter), sizeof(uint32_t));
+	//agregar_a_paquete(paquete, &(pcb->tabla_paginas), sizeof(uint32_t));
+	//agregar_a_paquete(paquete, &(pcb->estimacion_rafaga), sizeof(uint32_t));
 
 	return paquete;
 }
@@ -37,17 +37,50 @@ t_pcb *deserializar_pcb(t_paquete *paquete) {
 	t_list *datos = deserealizar_paquete(paquete);
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 
-	pcb->instrucciones = deserializar_instrucciones(datos, list_size(datos) - 5);
+	pcb->contexto->instrucciones = deserializar_instrucciones(datos, list_size(datos) - 5);
 
-	uint32_t offset = list_size(pcb->instrucciones) * 3;
-	pcb->id = *(uint32_t *)list_get(datos, offset + 0);
+	uint32_t offset = list_size(pcb->contexto->instrucciones) * 3;
+	pcb->contexto->pid = *(uint32_t *)list_get(datos, offset + 0);
 	pcb->tamanio_proceso = *(uint32_t *)list_get(datos, offset + 1);
-	pcb->program_counter = *(uint32_t *)list_get(datos, offset + 2);
-	pcb->tabla_paginas = *(uint32_t *)list_get(datos, offset + 3);
-	pcb->estimacion_rafaga = *(uint32_t *)list_get(datos, offset + 4);
+	pcb->contexto->program_counter = *(uint32_t *)list_get(datos, offset + 2);
+	//pcb->tabla_paginas = *(uint32_t *)list_get(datos, offset + 3);
+	//pcb->estimacion_rafaga = *(uint32_t *)list_get(datos, offset + 4);
 
 	list_destroy_and_destroy_elements(datos, free);
 	return pcb;
+}
+
+t_paquete *serializar_contexto_ejecucion(t_contexto_ejecucion *ce, t_protocolo protocolo) {
+
+	t_paquete *paquete = serializar_instrucciones(ce->instrucciones, protocolo);
+
+	agregar_a_paquete(paquete, &(ce->pid), sizeof(uint32_t));
+	agregar_a_paquete(paquete, &(ce->registros->AX), sizeof(uint32_t));
+	agregar_a_paquete(paquete, &(ce->registros->BX), sizeof(uint32_t));
+	agregar_a_paquete(paquete, &(ce->registros->CX), sizeof(uint32_t));
+	agregar_a_paquete(paquete, &(ce->registros->DX), sizeof(uint32_t));
+	agregar_a_paquete(paquete, &(ce->program_counter), sizeof(uint32_t));
+
+	return paquete;
+}
+
+void deserializar_contexto_ejecucion(t_contexto_ejecucion *contexto, t_paquete *paquete) {
+	t_list *datos = deserealizar_paquete(paquete);
+
+	contexto->instrucciones = deserializar_instrucciones(datos, list_size(datos) - 5);
+
+	uint32_t offset = list_size(contexto->instrucciones) * 3;
+	contexto->pid = *(uint32_t *)list_get(datos, offset + 0);
+	contexto->registros->AX = *(uint32_t *)list_get(datos, offset + 1);
+	contexto->registros->AX = *(uint32_t *)list_get(datos, offset + 2);
+	contexto->registros->AX = *(uint32_t *)list_get(datos, offset + 3);
+	contexto->registros->AX = *(uint32_t *)list_get(datos, offset + 4);
+	contexto->program_counter = *(uint32_t *)list_get(datos, offset + 5);
+	//pcb->tabla_paginas = *(uint32_t *)list_get(datos, offset + 3);
+	//pcb->estimacion_rafaga = *(uint32_t *)list_get(datos, offset + 4);
+
+	list_destroy_and_destroy_elements(datos, free);
+
 }
 
 t_paquete *serializar_instrucciones(t_list *instrucciones, t_protocolo protocolo) {

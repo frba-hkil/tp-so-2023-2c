@@ -28,7 +28,7 @@ sockets[1] = cpu_interrupt,
 sockets[2] = memoria,
 sockets[3] = filesystem
 */
-void (*command_handlers[6])(char* parametros);
+void (*command_handlers[6])(char** parametros);
 
 // Planificador Largo Plazo
 uint32_t generador_de_id;

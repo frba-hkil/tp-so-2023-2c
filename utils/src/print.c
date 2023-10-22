@@ -19,12 +19,12 @@ void print_instrucciones(t_log *logger, t_list *instrucciones) {
 
 void print_pcb(t_log *logger, t_pcb *pcb) {
 	log_info(logger, "**************** PCB **************");
-	log_info(logger, "PID = %d", pcb->id);
+	log_info(logger, "PID = %d", pcb->contexto->pid);
 	log_info(logger, "Tamanio proceso = %d", pcb->tamanio_proceso);
-	log_info(logger, "Cantidad de instrucciones = %d", list_size(pcb->instrucciones));
-	log_info(logger, "Program counter = %d", pcb->program_counter);
-	log_info(logger, "Tabla de paginas = %d", pcb->tabla_paginas);
-	log_info(logger, "Estimacion rafaga = %d", pcb->estimacion_rafaga);
+	log_info(logger, "Cantidad de instrucciones = %d", list_size(pcb->contexto->instrucciones));
+	log_info(logger, "Program counter = %d", pcb->contexto->program_counter);
+	//log_info(logger, "Tabla de paginas = %d", pcb->tabla_paginas);
+	//log_info(logger, "Estimacion rafaga = %d", pcb->estimacion_rafaga);
 	log_info(logger, "************************************");
 }
 
