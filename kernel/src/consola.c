@@ -2,11 +2,12 @@
 
 char* comandos[CANT_MAX_COMANDOS] = {"iniciar_proceso", "finalizar_proceso", "detener_planificacion", "iniciar_planificacion", "multiprogramacion", "proceso_estado"};
 
-void iniciar_consola(void){
-	pthread_t hilo;
+extern pthread_t console_thread;
 
-	pthread_create(&hilo, NULL, console_routine, (void*)console_handler);
-	pthread_join(hilo, NULL);
+void iniciar_consola(void){
+
+	pthread_create(&console_thread, NULL, console_routine, (void*)console_handler);
+
 }
 
 void* console_routine(void* arg){

@@ -15,6 +15,7 @@
 #include <cliente.h>
 #include "kernel_config.h"
 #include "consola.h"
+#include "print.h"
 
 // Kernel
 t_log *kernel_logger;
@@ -70,5 +71,6 @@ pthread_mutex_t mutex_suspended_blocked;
 pthread_mutex_t mutex_suspended_ready;
 pthread_t thread_suspended_ready;
 
+pthread_t console_thread;
 
 #endif /* KERNEL_GLOBAL_H_ */
