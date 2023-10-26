@@ -2,11 +2,12 @@
 
 char* comandos[CANT_MAX_COMANDOS] = {"iniciar_proceso", "finalizar_proceso", "detener_planificacion", "iniciar_planificacion", "multiprogramacion", "proceso_estado"};
 
-void iniciar_consola(void){
-	pthread_t hilo;
+extern pthread_t console_thread;
 
-	pthread_create(&hilo, NULL, console_routine, (void*)console_handler);
-	pthread_join(hilo, NULL);
+void iniciar_consola(void){
+
+	pthread_create(&console_thread, NULL, console_routine, (void*)console_handler);
+
 }
 
 void* console_routine(void* arg){
@@ -56,7 +57,7 @@ void ejecutar_comando(char* input, char** parametros){
 		i++;
 	}
 	if(i >= 6){
-		log_error(kernel_logger, "comando no existe")
+		log_error(kernel_logger, "comando no existe");
 		//printf("\ncomando no existe\n");
 	}
 }
@@ -65,7 +66,4 @@ void print_param(char* param){
 	printf("%s ", param);
 }
 
-int iniciar_proceso(char** parametros){
-	return 0;
-}
 

@@ -15,6 +15,7 @@
 #include <cliente.h>
 #include "kernel_config.h"
 #include "consola.h"
+#include "print.h"
 
 // Kernel
 t_log *kernel_logger;
@@ -28,7 +29,7 @@ sockets[1] = cpu_interrupt,
 sockets[2] = memoria,
 sockets[3] = filesystem
 */
-void (*command_handlers[6])(char* parametros);
+void (*command_handlers[6])(char** parametros);
 
 // Planificador Largo Plazo
 uint32_t generador_de_id;
@@ -70,5 +71,6 @@ pthread_mutex_t mutex_suspended_blocked;
 pthread_mutex_t mutex_suspended_ready;
 pthread_t thread_suspended_ready;
 
+pthread_t console_thread;
 
 #endif /* KERNEL_GLOBAL_H_ */

@@ -28,20 +28,22 @@ void eliminar_consola(t_consola *consola) {
 	free(consola);
 }
 
-t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, uint32_t program_counter, uint32_t estimacion_rafaga) {
+t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, uint32_t program_counter, uint32_t prioridad) {
 	t_pcb *pcb = malloc(sizeof(t_pcb));
+	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
+	pcb->contexto->registros = malloc(sizeof(t_registro));
 
-	pcb->id = id;
+	pcb->contexto->pid = id;
 	pcb->tamanio_proceso = tamanio_proceso;
-	pcb->instrucciones = instrucciones;//list_duplicate(instrucciones);
-	pcb->program_counter = program_counter;
-	pcb->estimacion_rafaga = estimacion_rafaga;
+	pcb->contexto->instrucciones = list_duplicate(instrucciones);//list_duplicate(instrucciones);
+	pcb->contexto->program_counter = program_counter;
+	pcb->prioridad = prioridad;
 
 	return pcb;
 }
 
 void eliminar_pcb(t_pcb *pcb) {
-	eliminar_instrucciones(pcb->instrucciones);
+	eliminar_instrucciones(pcb->contexto->instrucciones);
 	free(pcb);
 }
 

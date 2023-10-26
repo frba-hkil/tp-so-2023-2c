@@ -25,12 +25,12 @@ int iniciar_servidor(char *ip, char *puerto) {
         break;
     }
 
-    if(p == NULL)
+    if(p == NULL) {
     	return SOCKET_CREATION_ERROR;
-
-	if(listen(socket_servidor, SOMAXCONN) == -1)
+    }
+	if(listen(socket_servidor, SOMAXCONN) == -1) {
 		return LISTEN_ERROR;
-
+	}
     const int enable = 1;
     if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
         perror("setsockopt(SO_REUSEADDR) failed");

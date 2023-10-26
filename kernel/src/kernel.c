@@ -14,19 +14,11 @@ int main(int argc, char* argv[]) {
 
     //iniciar_conexiones_kernel(sockets);
     iniciar_consola();
+    //iniciar_planificador();
 
-    /*
-    int socket_kernel = iniciar_modulo_servidor(kernel_config->ip_kernel, kernel_config->puerto_escucha, kernel_logger);
-
-    log_info(kernel_logger, "Esperando conexion de consolas");
-	if(atender_clientes(socket_kernel) == WAIT_CLIENT_ERROR) {
-		log_error(kernel_logger, "Error al escuchar clientes... Finalizando servidor");
-	}
-	log_destroy(kernel_logger);
-	kernel_eliminar_configuracion(kernel_config);
-	cerrar_conexion(socket_kernel);
-    */
-    puts("Hello world!!");
+    log_destroy(kernel_logger);
+    kernel_eliminar_configuracion(kernel_config);
+    pthread_join(console_thread, NULL);
     return EXIT_SUCCESS;
 }
 
