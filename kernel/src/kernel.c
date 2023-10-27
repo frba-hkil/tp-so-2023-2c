@@ -13,12 +13,12 @@ int main(int argc, char* argv[]) {
 
     //iniciar_conexiones_kernel(sockets);
     iniciar_consola();
-    printf("consola ya inicio\n");
+    sleep(1);
     escuchar_consola();
 
     log_destroy(kernel_logger);
     kernel_eliminar_configuracion(kernel_config);
-    pthread_join(console_thread, NULL);
+    //pthread_join(console_thread, NULL);
     return EXIT_SUCCESS;
 }
 

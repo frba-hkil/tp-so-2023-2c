@@ -40,7 +40,7 @@ t_queue *cola_exit;
 sem_t sem_admitir;
 sem_t sem_exit;
 sem_t sem_grado_multiprogramacion;
-extern pthread_mutex_t mutex_generador_id;
+extern pthread_mutex_t mutex_inst_consola;
 pthread_mutex_t mutex_new;
 pthread_mutex_t mutex_exit;
 pthread_t thread_exit;

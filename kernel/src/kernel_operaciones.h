@@ -14,7 +14,7 @@ void (*command_handlers[6])(char**);
 Comando codigo_consola;
 char** parametros_consola;
 
-pthread_mutex_t mutex_generador_id;
+pthread_mutex_t mutex_inst_consola;
 sem_t sem_consola;
 uint32_t generador_de_id;
 

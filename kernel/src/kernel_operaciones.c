@@ -4,16 +4,19 @@ char *op_strings[] = {"NO_OP", "SET", "SUM", "SUB", "JNZ", "SLEEP", "WAIT", "SIG
                                 "MOV_IN", "MOV_OUT", "F_OPEN", "F_CLOSE", "F_SEEK", "F_WRITE",
                                 "F_TRUNCATE", "EXIT"};
 
+
 void escuchar_consola(void){
 
-	pthread_mutex_init(&mutex_generador_id, NULL);
 	generador_de_id = 0;
 	command_handlers[0] = iniciar_proceso;
 
 	while(1){
 		sem_wait(&sem_consola);
 		printf("recibi comando\n");
+
+		//pthread_mutex_lock(&mutex_inst_consola);
 		command_handlers[codigo_consola](parametros_consola);
+		//pthread_mutex_unlock(&mutex_inst_consola);
 
 	}
 }
@@ -25,14 +28,15 @@ void iniciar_proceso(char** parametros){
 		log_error(kernel_logger, "ruta invalida / no existe (%s).\n", parametros[0]);
 	}
 	else{
-		new_pcb = crear_pcb(crear_pid(), atoi(parametros[1]), crear_instrucciones(proceso), 0, atoi(parametros[2]));
+		//nadie mas que el hilo donde crea procesos escribe sobre el pid, no hay por que usar un mutex
+		new_pcb = crear_pcb(generador_de_id++, atoi(parametros[1]), crear_instrucciones(proceso), 0, atoi(parametros[2]));
 		print_pcb(kernel_logger, new_pcb);
 		print_instrucciones(kernel_logger, new_pcb->contexto->instrucciones);
 	}
 	fclose(proceso);
 	eliminar_pcb(new_pcb);
 }
-
+/*
 uint32_t crear_pid(void){
 
 	pthread_mutex_lock(&mutex_generador_id);
@@ -41,7 +45,7 @@ uint32_t crear_pid(void){
 
 	return id;
 }
-
+*/
 t_list *crear_instrucciones(FILE* proc) {
 
 	char *op;

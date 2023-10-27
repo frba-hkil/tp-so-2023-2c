@@ -22,6 +22,7 @@ char** console_handler(void){
 	char** parametros;
 
 	sem_init(&sem_consola, 0, 0);
+	pthread_mutex_init(&mutex_inst_consola, NULL);
 
 	while(1){
 		parametros = string_array_new();
@@ -33,7 +34,7 @@ char** console_handler(void){
 
 		if(s[1] != NULL){
 			parametros = string_n_split(s[1], 3, " ");
-			//string_iterate_lines(parametros, &print_param);
+			string_iterate_lines(parametros, &print_param);
 		}
 		else{
 			printf("parametro vacio\n");
@@ -55,8 +56,11 @@ void interpretar_comando(char* input, char** parametros){
 		if(string_equals_ignore_case(input, comandos[i])){
 			//(*command_handlers[i])(parametros);
 			log_info(kernel_logger, "comando encontrado: %s", comandos[i]);
+
+			//pthread_mutex_lock(&mutex_inst_consola);
 			codigo_consola = i;
 			parametros_consola = copy_string_array(parametros, string_array_size(parametros));
+			//pthread_mutex_unlock(&mutex_inst_consola);
 			sem_post(&sem_consola);
 			//printf("\ncomando encontrado: %s\n", comandos[i]);
 			break;

@@ -23,6 +23,7 @@ typedef enum{
 
 t_log *kernel_logger;
 sem_t sem_consola;
+pthread_mutex_t mutex_inst_consola;
 extern Comando codigo_consola;
 extern char** parametros_consola;
 
