@@ -8,10 +8,9 @@
 #include <stdlib.h>
 #include <commons/collections/list.h>
 #include <commons/string.h>
+#include <semaphore.h>
 
 #define CANT_MAX_COMANDOS 6
-
-extern t_log *kernel_logger;
 
 typedef enum{
 	INICIAR_PROCESO,
@@ -22,16 +21,23 @@ typedef enum{
 	PROCESO_ESTADO
 }Comando;
 
+t_log *kernel_logger;
+sem_t sem_consola;
+extern Comando codigo_consola;
+extern char** parametros_consola;
+
 //char* comandos[CANT_MAX_COMANDOS] = {"iniciar_proceso", "finalizar_proceso", "detener_planificacion", "iniciar_planificacion", "multiprogramacion", "proceso_estado"};
 
 void iniciar_consola(void);
 
-void console_handler(void);
+char** console_handler(void);
 
 void* console_routine(void*);
 
-void ejecutar_comando(char* input, char** parametros);
+void interpretar_comando(char* input, char** parametros);
 
 void print_param(char*);
+
+char** copy_string_array(char** original, int size);
 
 #endif /* SRC_CONSOLA_H_ */

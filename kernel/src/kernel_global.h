@@ -29,17 +29,18 @@ sockets[1] = cpu_interrupt,
 sockets[2] = memoria,
 sockets[3] = filesystem
 */
-void (*command_handlers[6])(char** parametros);
+
+extern sem_t sem_consola;
 
 // Planificador Largo Plazo
-uint32_t generador_de_id;
+extern uint32_t generador_de_id;
 //uint32_t procesos_admitidos_en_ready;
 t_queue *cola_new;
 t_queue *cola_exit;
 sem_t sem_admitir;
 sem_t sem_exit;
 sem_t sem_grado_multiprogramacion;
-pthread_mutex_t mutex_generador_id;
+extern pthread_mutex_t mutex_generador_id;
 pthread_mutex_t mutex_new;
 pthread_mutex_t mutex_exit;
 pthread_t thread_exit;

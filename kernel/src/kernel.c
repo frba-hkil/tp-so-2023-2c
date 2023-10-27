@@ -9,12 +9,12 @@ int main(int argc, char* argv[]) {
 	}
 	kernel_config = kernel_leer_configuracion(argv[1]);
 
-    log_info(kernel_logger, "Hello world!!");
     //log_info(kernel_logger, kernel_config->recursos);
 
     //iniciar_conexiones_kernel(sockets);
     iniciar_consola();
-    //iniciar_planificador();
+    printf("consola ya inicio\n");
+    escuchar_consola();
 
     log_destroy(kernel_logger);
     kernel_eliminar_configuracion(kernel_config);

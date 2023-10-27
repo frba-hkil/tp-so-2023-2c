@@ -1,9 +1,8 @@
 #include "estructuras.h"
 
-
-t_instruccion *crear_instruccion(t_identificador identificador, uint32_t primer_operando, uint32_t segundo_operando) {
+t_instruccion *crear_instruccion(t_op_code op_code, uint32_t primer_operando, uint32_t segundo_operando) {
 	t_instruccion *instruccion = malloc(sizeof(t_instruccion));
-	instruccion->identificador = identificador;
+	instruccion->identificador = op_code;
 	instruccion->primer_operando = primer_operando;
 	instruccion->segundo_operando = segundo_operando;
 

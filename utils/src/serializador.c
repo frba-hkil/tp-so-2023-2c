@@ -83,7 +83,7 @@ t_paquete *serializar_instrucciones(t_list *instrucciones, t_protocolo protocolo
 
 	for(int i = 0; i < list_size(instrucciones); i++) {
 		t_instruccion *instruccion = (t_instruccion *)list_get(instrucciones, i);
-		agregar_a_paquete(paquete, &(instruccion->identificador), sizeof(t_identificador));
+		agregar_a_paquete(paquete, &(instruccion->identificador), sizeof(t_op_code));
 		agregar_a_paquete(paquete, &(instruccion->primer_operando), sizeof(uint32_t));
 		agregar_a_paquete(paquete, &(instruccion->segundo_operando), sizeof(uint32_t));
 	}
@@ -96,7 +96,7 @@ t_list *deserializar_instrucciones(t_list *datos, uint32_t longitud_datos) {
 
 	for(int i = 0; i < longitud_datos; i += 3) {
 		t_instruccion *instruccion = malloc(sizeof(t_instruccion));
-		instruccion->identificador = *(t_identificador *)list_get(datos, i);
+		instruccion->identificador = *(t_op_code *)list_get(datos, i);
 		instruccion->primer_operando = *(uint32_t *)list_get(datos, i + 1);
 		instruccion->segundo_operando = *(uint32_t *)list_get(datos, i + 2);
 		list_add(instrucciones, instruccion);
