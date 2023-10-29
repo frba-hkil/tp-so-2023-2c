@@ -31,7 +31,7 @@ extern char** parametros_consola;
 
 void iniciar_consola(void);
 
-char** console_handler(void);
+void console_handler(void);
 
 void* console_routine(void*);
 

@@ -38,8 +38,8 @@ typedef enum {
 
 typedef struct {
 	t_op_code identificador;
-	uint32_t primer_operando;
-	uint32_t segundo_operando;
+	char* primer_operando;
+	char* segundo_operando;
 } t_instruccion;
 
 typedef struct {
@@ -80,10 +80,8 @@ typedef struct {
 } t_tabla_acceso;
 
 
-t_instruccion *crear_instruccion(t_op_code identificador, uint32_t primer_operando, uint32_t segundo_operando);
+t_instruccion *crear_instruccion(t_op_code identificador, char* primer_operando, char* segundo_operando);
 void eliminar_instrucciones(t_list *instrucciones);
-t_consola *crear_consola(t_list *instrucciones, uint32_t tamanio);
-void eliminar_consola(t_consola *consola);
 t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, uint32_t program_counter, uint32_t prioridad);
 void eliminar_pcb(t_pcb *pcb);
 t_traductor *crear_traductor_direcciones(int entradas_tabla, int tamanio_pagina);

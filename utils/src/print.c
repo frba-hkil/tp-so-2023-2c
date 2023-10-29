@@ -1,17 +1,10 @@
 #include "print.h"
 
-void print_datos_consola(t_log *logger, t_consola *consola) {
-	log_info(logger, "*********** DATOS CONSOLA *********");
-	log_info(logger,"Cantidad de instrucciones = %d", list_size(consola->instrucciones));
-	log_info(logger,"Tamanio consola = %d", consola->tamanio);
-	log_info(logger, "***********************************");
-}
-
 void print_instrucciones(t_log *logger, t_list *instrucciones) {
 	log_info(logger, "************ INTRUCCIONES ***********");
 	for(int i = 0; i < list_size(instrucciones); i++) {
 		t_instruccion *instruccion = (t_instruccion *)list_get(instrucciones, i);
-		log_info(logger, "ID: %d, OP_1: %d, OP_2: %d",
+		log_info(logger, "ID: %d, OP_1: %s, OP_2: %s",
 				instruccion->identificador, instruccion->primer_operando, instruccion->segundo_operando);
 	}
 	log_info(logger, "***********************************");

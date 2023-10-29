@@ -6,7 +6,7 @@ extern pthread_t console_thread;
 
 void iniciar_consola(void){
 
-	pthread_create(&console_thread, NULL, console_routine, (void*)console_handler);
+	pthread_create(&console_thread, NULL, (void*)console_handler, NULL);
 
 }
 
@@ -17,12 +17,12 @@ void* console_routine(void* arg){
 	return NULL;
 }
 
-char** console_handler(void){
+void console_handler(void){
 	char* input;
 	char** parametros;
 
 	sem_init(&sem_consola, 0, 0);
-	pthread_mutex_init(&mutex_inst_consola, NULL);
+	//pthread_mutex_init(&mutex_inst_consola, NULL);
 
 	while(1){
 		parametros = string_array_new();
@@ -45,6 +45,7 @@ char** console_handler(void){
 		free(input);
 		string_array_destroy(s);
 		string_array_destroy(parametros);
+		fflush(stdin);
 	}
 
 }
