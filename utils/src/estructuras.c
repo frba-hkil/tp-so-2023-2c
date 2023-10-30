@@ -23,6 +23,7 @@ t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, u
 	pcb->contexto->instrucciones = list_duplicate(instrucciones);//list_duplicate(instrucciones);
 	pcb->contexto->program_counter = program_counter;
 	pcb->prioridad = prioridad;
+	pcb->estado = NEW;
 
 	return pcb;
 }

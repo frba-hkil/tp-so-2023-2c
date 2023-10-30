@@ -17,6 +17,9 @@ void escuchar_consola(void) {
 	pthread_mutex_init(&mutex_plani_running, NULL);
 	sem_init(&sem_planificacion_l, 0, 0);
 	sem_init(&sem_planificacion_c, 0, 0);
+	sem_init(&sem_grado_multiprogramacion, 0, kernel_config->grado_multiprogramacion);
+	sem_init(&sem_new, 0, 0);
+	//sem_init(&sem_exit, 0, 0);
 
 	//sleep(1);
 	pthread_create(&plani_largo_thread, NULL, (void*) plani_largo_pl, NULL);
@@ -24,7 +27,6 @@ void escuchar_consola(void) {
 
 	while(1){
 		sem_wait(&sem_consola);
-		printf("recibi comando\n");
 
 		//pthread_mutex_lock(&mutex_inst_consola);
 		command_handlers[codigo_consola](parametros_consola);
@@ -47,6 +49,7 @@ void iniciar_proceso(char** parametros) {
 		pthread_mutex_lock(&mutex_new);
 		queue_push(cola_new, new_pcb);
 		pthread_mutex_unlock(&mutex_new);
+		sem_post(&sem_new);
 		log_info(kernel_logger, "Se crea el proceso <%d> en NEW", new_pcb->contexto->pid);
 	}
 	fclose(proceso);
@@ -54,7 +57,8 @@ void iniciar_proceso(char** parametros) {
 }
 
 void finalizar_proceso(char** parametros) {
-	//si esta en running(en cpu), espero (hago un sem_wait) hasta que la cpu me devuelta el contexto
+	//si esta en running(en cpu), mando una interrupcion para terminar
+	//espero (hago un sem_wait) hasta que la cpu me devuelta el contexto
 	//si esta en cualquier otro estado lo termino en el instante
 	//funcion: liberar recursos y cambiar estado a EXIT
 	//signal(grado multiprogramacion)
@@ -68,6 +72,7 @@ void iniciar_planificacion(char** parametros) {
 		pthread_mutex_unlock(&mutex_plani_running);
 		sem_post(&sem_planificacion_l);
 		sem_post(&sem_planificacion_c);
+		pthread_cond_signal(&cond_plani_running);
 	}
 
 }

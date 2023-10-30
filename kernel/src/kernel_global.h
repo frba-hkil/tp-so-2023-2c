@@ -19,7 +19,7 @@
 
 // Kernel
 t_log *kernel_logger;
-t_kernel_config *kernel_config;
+extern t_kernel_config *kernel_config;
 int socket_cpu_interrupt;
 int socket_cpu_dispatch;
 int socket_memoria;
@@ -38,16 +38,18 @@ extern sem_t sem_planificacion_c; // dispara senial para arrancar planificador d
 // Planificador Largo Plazo
 extern uint32_t generador_de_id; // simiplemente es un contador para registrar pids a los pcbs que se van generando
 //uint32_t procesos_admitidos_en_ready;
-t_queue *cola_new;
-t_queue *cola_exit;
-sem_t sem_admitir;
+extern t_queue *cola_new;
+extern t_queue *cola_exit;
+//extern sem_t sem_admitir;
+//extern sem_t sem_finalizar;
+extern sem_t sem_new;
 sem_t sem_exit;
-sem_t sem_grado_multiprogramacion;
+extern sem_t sem_grado_multiprogramacion;
 extern pthread_mutex_t mutex_inst_consola;
 extern pthread_mutex_t mutex_new;
 pthread_mutex_t mutex_exit;
 pthread_t thread_exit;
-pthread_t thread_admitir;
+//extern pthread_t thread_admitir;
 
 
 // Planificador Corto Plazo

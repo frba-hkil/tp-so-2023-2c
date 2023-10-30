@@ -34,12 +34,13 @@ void console_handler(void){
 
 		if(s[1] != NULL){
 			parametros = string_n_split(s[1], 3, " ");
-			string_iterate_lines(parametros, &print_param);
+			//string_iterate_lines(parametros, &print_param);
 		}
+		/*
 		else{
 			printf("parametro vacio\n");
 		}
-
+		*/
 		interpretar_comando(s[0], parametros);
 
 		free(input);
@@ -56,7 +57,7 @@ void interpretar_comando(char* input, char** parametros){
 	while(i < 6){
 		if(string_equals_ignore_case(input, comandos[i])){
 			//(*command_handlers[i])(parametros);
-			log_info(kernel_logger, "comando encontrado: %s", comandos[i]);
+			//log_info(kernel_logger, "comando encontrado: %s", comandos[i]);
 
 			//pthread_mutex_lock(&mutex_inst_consola);
 			codigo_consola = i;

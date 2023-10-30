@@ -9,8 +9,9 @@
 #include <commons/collections/queue.h>
 #include "consola.h"
 #include "planificadores.h"
+#include "kernel_config.h"
 
-
+t_kernel_config *kernel_config;
 void (*command_handlers[6])(char**);
 
 int plani_running;
@@ -23,6 +24,7 @@ pthread_t plani_corto_thread;
 pthread_mutex_t mutex_plani_running;
 pthread_mutex_t mutex_new;
 sem_t sem_consola;
+sem_t sem_new;
 uint32_t generador_de_id;
 
 t_queue *cola_new;

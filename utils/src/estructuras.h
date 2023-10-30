@@ -67,6 +67,7 @@ typedef struct {
 	uint32_t tamanio_proceso;
 	//uint32_t tabla_paginas;
 	uint32_t prioridad;
+	t_estado estado;
 } t_pcb;
 
 typedef struct {
