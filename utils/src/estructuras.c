@@ -1,31 +1,16 @@
 #include "estructuras.h"
 
-
-t_instruccion *crear_instruccion(t_identificador identificador, uint32_t primer_operando, uint32_t segundo_operando) {
+t_instruccion *crear_instruccion(t_op_code op_code, char* primer_operando, char* segundo_operando) {
 	t_instruccion *instruccion = malloc(sizeof(t_instruccion));
-	instruccion->identificador = identificador;
-	instruccion->primer_operando = primer_operando;
-	instruccion->segundo_operando = segundo_operando;
+	instruccion->identificador = op_code;
+	instruccion->primer_operando = string_duplicate(primer_operando);
+	instruccion->segundo_operando = string_duplicate(segundo_operando);
 
 	return instruccion;
 }
 
 void eliminar_instrucciones(t_list *instrucciones) {
 	list_destroy_and_destroy_elements(instrucciones, free);
-}
-
-t_consola *crear_consola(t_list *instrucciones, uint32_t tamanio) {
-	t_consola *consola = malloc(sizeof(t_consola));
-
-	consola->instrucciones = instrucciones;
-	consola->tamanio = tamanio;
-
-	return consola;
-}
-
-void eliminar_consola(t_consola *consola) {
-	eliminar_instrucciones(consola->instrucciones);
-	free(consola);
 }
 
 t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, uint32_t program_counter, uint32_t prioridad) {
@@ -38,6 +23,7 @@ t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, u
 	pcb->contexto->instrucciones = list_duplicate(instrucciones);//list_duplicate(instrucciones);
 	pcb->contexto->program_counter = program_counter;
 	pcb->prioridad = prioridad;
+	pcb->estado = NEW;
 
 	return pcb;
 }

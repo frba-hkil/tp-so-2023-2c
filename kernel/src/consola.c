@@ -6,7 +6,7 @@ extern pthread_t console_thread;
 
 void iniciar_consola(void){
 
-	pthread_create(&console_thread, NULL, console_routine, (void*)console_handler);
+	pthread_create(&console_thread, NULL, (void*)console_handler, NULL);
 
 }
 
@@ -21,6 +21,9 @@ void console_handler(void){
 	char* input;
 	char** parametros;
 
+	sem_init(&sem_consola, 0, 0);
+	//pthread_mutex_init(&mutex_inst_consola, NULL);
+
 	while(1){
 		parametros = string_array_new();
 		input = readline(">>");
@@ -33,24 +36,34 @@ void console_handler(void){
 			parametros = string_n_split(s[1], 3, " ");
 			//string_iterate_lines(parametros, &print_param);
 		}
+		/*
 		else{
 			printf("parametro vacio\n");
 		}
-		ejecutar_comando(s[0], parametros);
+		*/
+		interpretar_comando(s[0], parametros);
+
 		free(input);
 		string_array_destroy(s);
 		string_array_destroy(parametros);
+		fflush(stdin);
 	}
 
 }
 
-void ejecutar_comando(char* input, char** parametros){
+void interpretar_comando(char* input, char** parametros){
 	Comando i = 0;
 
 	while(i < 6){
 		if(string_equals_ignore_case(input, comandos[i])){
 			//(*command_handlers[i])(parametros);
-			log_info(kernel_logger, "comando encontrado: %s", comandos[i]);
+			//log_info(kernel_logger, "comando encontrado: %s", comandos[i]);
+
+			//pthread_mutex_lock(&mutex_inst_consola);
+			codigo_consola = i;
+			parametros_consola = copy_string_array(parametros, string_array_size(parametros));
+			//pthread_mutex_unlock(&mutex_inst_consola);
+			sem_post(&sem_consola);
 			//printf("\ncomando encontrado: %s\n", comandos[i]);
 			break;
 		}
@@ -66,4 +79,25 @@ void print_param(char* param){
 	printf("%s ", param);
 }
 
+char** copy_string_array(char** original, int size) {
+    // Allocate memory for the new array of strings
+    char** copy = (char**)malloc(size * sizeof(char*));
 
+    if (copy != NULL) {
+        for (int i = 0; i < size; ++i) {
+
+            copy[i] = strdup(original[i]);
+
+            if (copy[i] == NULL) {
+
+                for (int j = 0; j < i; ++j) {
+                    free(copy[j]);
+                }
+                free(copy);
+                return NULL;
+            }
+        }
+    }
+
+    return copy;
+}

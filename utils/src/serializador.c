@@ -51,6 +51,8 @@ t_paquete *serializar_pcb(t_pcb *pcb, t_protocolo protocolo) {
 
     agregar_a_paquete(paquete, &(pcb->tamanio_proceso), sizeof(uint32_t));
     agregar_a_paquete(paquete, &(pcb->prioridad), sizeof(uint32_t));
+    uint32_t estado = (uint32_t)pcb->estado;
+    agregar_a_paquete(paquete, &estado, sizeof(uint32_t));
 
     return paquete;
 }
@@ -71,7 +73,8 @@ t_pcb *deserializar_pcb(t_paquete *paquete) {
     memcpy(pcb->contexto->registros, list_get(datos, offset + 1), sizeof(t_registro));
     pcb->contexto->program_counter = *(uint32_t *)list_get(datos, offset + 2);
     pcb->tamanio_proceso = *(uint32_t *)list_get(datos, offset + 3);
-    //pcb->prioridad = *(uint32_t *)list_get(datos, offset + 4);
+    pcb->prioridad = *(uint32_t *)list_get(datos, offset + 4);
+    pcb->estado = *(t_estado *)list_get(datos, offset + 5);
 
 
     list_destroy_and_destroy_elements(datos, free);
@@ -83,9 +86,9 @@ t_paquete *serializar_instrucciones(t_list *instrucciones, t_protocolo protocolo
 
 	for(int i = 0; i < list_size(instrucciones); i++) {
 		t_instruccion *instruccion = (t_instruccion *)list_get(instrucciones, i);
-		agregar_a_paquete(paquete, &(instruccion->identificador), sizeof(t_identificador));
-		agregar_a_paquete(paquete, &(instruccion->primer_operando), sizeof(uint32_t));
-		agregar_a_paquete(paquete, &(instruccion->segundo_operando), sizeof(uint32_t));
+		agregar_a_paquete(paquete, &(instruccion->identificador), sizeof(t_op_code));
+		agregar_a_paquete(paquete, instruccion->primer_operando, strlen(instruccion->primer_operando)+1);
+		agregar_a_paquete(paquete, instruccion->segundo_operando, strlen(instruccion->segundo_operando)+1);
 	}
 
 	return paquete;
@@ -96,9 +99,9 @@ t_list *deserializar_instrucciones(t_list *datos, uint32_t longitud_datos) {
 
 	for(int i = 0; i < longitud_datos; i += 3) {
 		t_instruccion *instruccion = malloc(sizeof(t_instruccion));
-		instruccion->identificador = *(t_identificador *)list_get(datos, i);
-		instruccion->primer_operando = *(uint32_t *)list_get(datos, i + 1);
-		instruccion->segundo_operando = *(uint32_t *)list_get(datos, i + 2);
+		instruccion->identificador = *(t_op_code *)list_get(datos, i);
+		instruccion->primer_operando = string_duplicate((char *)list_get(datos, i + 1));
+		instruccion->segundo_operando = string_duplicate((char *)list_get(datos, i + 2));
 		list_add(instrucciones, instruccion);
 	}
 
