@@ -6,6 +6,8 @@
 #include <semaphore.h>
 #include <stdio.h>
 #include "transiciones_estado_pcb.h"
+#include "prioridad.h"
+#include "ready.h"
 
 sem_t sem_planificacion_l;
 sem_t sem_planificacion_c;
@@ -13,8 +15,10 @@ sem_t sem_planificacion_c;
 //sem_t sem_finalizar;
 sem_t sem_grado_multiprogramacion;
 sem_t sem_new;
-sem_t sem_seguir_admitiendo;
-sem_t sem_seguir_finalizando;
+//sem_t sem_lista_ready;
+
+//sem_t sem_seguir_admitiendo;
+//sem_t sem_seguir_finalizando;
 
 int plani_running;
 
@@ -26,9 +30,11 @@ pthread_mutex_t mutex_exit;
 pthread_t thread_admitir;
 pthread_t thread_finalizar;
 
+//t_list *lista_ready;
+
 void plani_largo_pl(void);
 
-void plani_corto_pl(void);
+void plani_corto_pl(char*);
 
 void admitir_procesos(void);
 

@@ -3,9 +3,13 @@
 void plani_largo_pl(void) {
 
 	char hilos_creados = 0;
-	sem_init(&sem_seguir_admitiendo, 0, 0);
+	//sem_init(&sem_seguir_admitiendo, 0, 0);
 	pthread_cond_init(&cond_plani_running, NULL);
+	pthread_mutex_init(&mutex_lista_ready, NULL);
+	sem_init(&sem_lista_ready, 0, 0);
+	lista_ready = list_create();
 	//sem_init(&sem_seguir_finalizando, 0, 0);
+	//sem_init(&sem_lista_ready, 0, 0);
 
 	while(1) {
 
@@ -26,7 +30,7 @@ void plani_largo_pl(void) {
 		}
 
 		else {
-			//printf("\npausando...\n");
+			//printf("\npausando L...\n");
 			pthread_mutex_unlock(&mutex_plani_running);
 			sem_wait(&sem_planificacion_l);
 		}
@@ -34,7 +38,20 @@ void plani_largo_pl(void) {
 	}
 }
 
-void plani_corto_pl(void) {
+void plani_corto_pl(char* algoritmo) {
+	t_pcb * (*planificador)(t_list*);
+	t_pcb* pcb_a_ejecutar;
+
+	if(string_equals_ignore_case(algoritmo, "prioridades"))
+		planificador = &prioridades;
+	/*
+	else if (string_equals_ignore_case(algoritmo, "round robin")) {
+		planificador = &round_robin;
+	}
+	else {
+		planificador = &fifo;
+	}
+	*/
 
 	while(1) {
 
@@ -43,20 +60,28 @@ void plani_corto_pl(void) {
 			//pthread_mutex_unlock(&mutex_plani_running);
 			//printf("\ncorriendo plani corto plazo...\n");
 			//sleep(10);
-			//elegir proceso a correr de acuerdo al algoritmo
+
+			sem_wait(&sem_lista_ready); // si no hay mas procesos en ready se pausa
+			pthread_mutex_lock(&mutex_lista_ready);
+			pcb_a_ejecutar = planificador(lista_ready);
+			pthread_mutex_unlock(&mutex_lista_ready);
+			log_info(kernel_logger, "proceso [%d] READY->EXEC", pcb_a_ejecutar->contexto->pid);
+
 			//mandar a cpu y esperar respuesta(contexto)
 			//actualizar pcb. si devolvio contexto por EXIT agregar a cola de exit
 			//sem_post(&sem_exit); si es por EXIT
 		}
 
 		else {
-			//printf("\npausando...\n");
+			//printf("\npausando C...\n");
 			sem_wait(&sem_planificacion_c);
 		}
 	}
 }
 
 void admitir_procesos(void) {
+
+	pthread_mutex_init(&mutex_lista_ready, NULL);
 
 	while(1) {
 
@@ -85,6 +110,7 @@ void admitir_procesos(void) {
 		pcb_new_a_ready(pcb_ready);
 	}
 }
+
 /*
 void finalizar_procesos(void) {
 

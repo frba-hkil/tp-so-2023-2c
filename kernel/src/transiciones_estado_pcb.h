@@ -3,6 +3,7 @@
 
 #include <estructuras.h>
 #include "kernel_conexiones.h"
+#include "ready.h"
 
 void pcb_new_a_ready(t_pcb* new_pcb);
 

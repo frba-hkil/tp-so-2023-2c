@@ -23,7 +23,7 @@ void escuchar_consola(void) {
 
 	//sleep(1);
 	pthread_create(&plani_largo_thread, NULL, (void*) plani_largo_pl, NULL);
-	pthread_create(&plani_corto_thread, NULL, (void*) plani_corto_pl, NULL);
+	pthread_create(&plani_corto_thread, NULL, (void*) plani_corto_pl, kernel_config->algoritmo_planificacion);
 
 	while(1){
 		sem_wait(&sem_consola);
