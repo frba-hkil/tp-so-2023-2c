@@ -12,6 +12,24 @@ int main(int argc, char *argv[]) {
     // int socket_interrupt = iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_INTERRUPT"));
     // int socket_memoria = crear_conexion(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"));
 
+    // TEST
+    // t_list *instrucciones = list_create();
+    // list_add(instrucciones, crear_instruccion(SET, "AX", "10"));
+    // list_add(instrucciones, crear_instruccion(SET, "BX", "20"));
+    // list_add(instrucciones, crear_instruccion(SUM, "BX", "AX"));
+
+    // t_contexto_ejecucion *contexto = malloc(sizeof(t_contexto_ejecucion));
+	// contexto->registros = malloc(sizeof(t_registro));
+	// contexto->instrucciones = instrucciones;
+	// contexto->program_counter = 1;
+    
+    // ejecutarInstrucciones(contexto);
+
+    // printf("AX %d\n", contexto->registros->AX);
+    // printf("BX %d\n", contexto->registros->BX);
+    // printf("CX %d\n", contexto->registros->CX);
+    // printf("DX %d\n", contexto->registros->DX);
+
     config_destroy(cfg);
     return 0;
 }
@@ -51,10 +69,10 @@ uint32_t transform_value(t_contexto_ejecucion *contexto, char *val) {
     return atoi(val);
 }
  
-void ejecutarInstruccion(t_list *instrucciones, t_contexto_ejecucion *contexto) {
+void ejecutarInstrucciones(t_contexto_ejecucion *contexto) {
 
-    while (contexto->program_counter<=list_size(instrucciones)) {
-        t_instruccion *instruccion = list_get(instrucciones, contexto->program_counter-1);
+    while (contexto->program_counter<=list_size(contexto->instrucciones)) {
+        t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter-1);
         contexto->program_counter++;
 
         if (instruccion->identificador == SET) {
@@ -69,7 +87,6 @@ void ejecutarInstruccion(t_list *instrucciones, t_contexto_ejecucion *contexto) 
             }
         } else if (instruccion->identificador == SLEEP) {
             //SLEEP (Tiempo): Esta instrucción representa una syscall bloqueante. Se deberá devolver el Contexto de Ejecución actualizado al Kernel junto a la cantidad de segundos que va a bloquearse el proceso.
-        
         } else if (instruccion->identificador == WAIT) {
             //WAIT (Recurso): Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro
 
