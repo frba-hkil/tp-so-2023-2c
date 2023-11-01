@@ -21,6 +21,7 @@ typedef enum {
 	F_OPEN,
 	F_CLOSE,
 	F_SEEK,
+	F_READ,
 	F_WRITE,
 	F_TRUNCATE,
 	EXIT
