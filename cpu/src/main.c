@@ -8,12 +8,40 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    // int socket_dispatch = iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_DISPATCH"));
-    // int socket_interrupt = iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_INTERRUPT"));
-    // int socket_memoria = crear_conexion(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"));
+    sockets.dispatch= iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_DISPATCH"));
+    sockets.interrupt = iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_INTERRUPT"));
+    sockets.memoria = crear_conexion(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"));
+
+    iniciar_hilos_cpu();
 
     config_destroy(cfg);
     return 0;
+}
+
+void iniciar_hilos_cpu() {
+    pthread_t t_hilo_dispatch, t_hilo_interrupt;
+
+    pthread_create(&t_hilo_dispatch, NULL, (void *)hilo_dispatch, NULL);
+    pthread_create(&t_hilo_interrupt, NULL, (void *)hilo_interrupt, NULL);
+
+    pthread_join(t_hilo_dispatch, NULL);
+    pthread_join(t_hilo_interrupt, NULL);
+}
+
+void hilo_dispatch() {
+    while (1) {
+        t_paquete *pqt = recibir_paquete(sockets.dispatch);
+
+        if (pqt != NULL) {
+            t_contexto_ejecucion *cntx = malloc(sizeof(t_contexto_ejecucion));
+            deserializar_contexto_ejecucion(cntx, pqt);
+            ejecutarInstrucciones(cntx);
+        }
+    }
+}
+
+void hilo_interrupt() {
+
 }
 
 void set_registro(t_contexto_ejecucion *contexto, char *reg, u_int32_t val) {
@@ -53,7 +81,7 @@ uint32_t transform_value(t_contexto_ejecucion *contexto, char *val) {
  
 void ejecutarInstrucciones(t_contexto_ejecucion *contexto) {
     while (contexto->program_counter<=list_size(contexto->instrucciones)) {
-        t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter-1);
+        t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter-1); //mem-leak?
         contexto->program_counter++;
         bool devolver;
         t_protocolo protocolo;
@@ -115,8 +143,7 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto) {
 
         if (devolver) {
             t_paquete *cntx = serializar_contexto_ejecucion(contexto, protocolo);
-            enviar_paquete(cntx, 0/*?????????????*/);
-
+            enviar_paquete(cntx, sockets.dispatch);
 
             break;
         }
