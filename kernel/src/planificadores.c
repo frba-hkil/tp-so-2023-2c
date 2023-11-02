@@ -3,13 +3,12 @@
 void plani_largo_pl(void) {
 
 	char hilos_creados = 0;
-	//sem_init(&sem_seguir_admitiendo, 0, 0);
+
 	pthread_cond_init(&cond_plani_running, NULL);
+	pthread_cond_init(&cond_ready_agregado, NULL);
 	pthread_mutex_init(&mutex_lista_ready, NULL);
 	sem_init(&sem_lista_ready, 0, 0);
 	lista_ready = list_create();
-	//sem_init(&sem_seguir_finalizando, 0, 0);
-	//sem_init(&sem_lista_ready, 0, 0);
 
 	while(1) {
 
@@ -23,10 +22,7 @@ void plani_largo_pl(void) {
 				hilos_creados = 1;
 			}
 			//pthread_mutex_unlock(&mutex_plani_running);
-			//printf("\ncorriendo plani largo plazo...\n");
-			//sleep(10);
-			//sem_post(&sem_seguir_admitiendo);
-			//sem_post(&sem_seguir_finalizando);
+
 		}
 
 		else {
@@ -39,15 +35,15 @@ void plani_largo_pl(void) {
 }
 
 void plani_corto_pl(char* algoritmo) {
-	t_pcb * (*planificador)(t_list*);
-	t_pcb* pcb_a_ejecutar;
+	void (*planificador)(t_list*);
 
 	if(string_equals_ignore_case(algoritmo, "prioridades"))
 		planificador = &prioridades;
-	/*
+
 	else if (string_equals_ignore_case(algoritmo, "round robin")) {
 		planificador = &round_robin;
 	}
+	/*
 	else {
 		planificador = &fifo;
 	}
@@ -55,19 +51,18 @@ void plani_corto_pl(char* algoritmo) {
 
 	while(1) {
 
-		//pthread_mutex_lock(&mutex_plani_running);
+		pthread_mutex_lock(&mutex_plani_running);
 		if(plani_running) {
-			//pthread_mutex_unlock(&mutex_plani_running);
+			pthread_mutex_unlock(&mutex_plani_running);
 			//printf("\ncorriendo plani corto plazo...\n");
 			//sleep(10);
 			sleep(1);
 			sem_wait(&sem_lista_ready); // si no hay mas procesos en ready se pausa
 			//pthread_mutex_lock(&mutex_lista_ready);
-			pcb_a_ejecutar = planificador(lista_ready);
+			planificador(lista_ready);
 			//pthread_mutex_unlock(&mutex_lista_ready);
-			log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb_a_ejecutar->contexto->pid);
-
-			//pthread_mutex_unlock(&mutex_plani_running);
+			//log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb_a_ejecutar->contexto->pid);
+			//sem_post(&sem_grado_multiprogramacion);
 			//mandar a cpu y esperar respuesta(contexto)
 			//actualizar pcb. si devolvio contexto por EXIT agregar a cola de exit
 			//sem_post(&sem_exit); si es por EXIT
@@ -75,7 +70,7 @@ void plani_corto_pl(char* algoritmo) {
 
 		else {
 			//printf("\npausando C...\n");
-			//pthread_mutex_unlock(&mutex_plani_running);
+			pthread_mutex_unlock(&mutex_plani_running);
 			sem_wait(&sem_planificacion_c);
 		}
 	}
@@ -106,6 +101,7 @@ void admitir_procesos(void) {
 		pthread_mutex_unlock(&mutex_new);
 
 		pcb_new_a_ready(pcb_ready);
+		pthread_cond_signal(&cond_ready_agregado);
 	}
 }
 

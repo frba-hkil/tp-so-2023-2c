@@ -12,6 +12,7 @@ void escuchar_consola(void) {
 	command_handlers[0] = iniciar_proceso;
 	command_handlers[2] = detener_planificacion;
 	command_handlers[3] = iniciar_planificacion;
+	command_handlers[4] = cambiar_multiprogramacion;
 	cola_new = queue_create();
 	pthread_mutex_init(&mutex_new, NULL);
 	pthread_mutex_init(&mutex_plani_running, NULL);
@@ -86,16 +87,12 @@ void detener_planificacion(char** parametros) {
 	}
 }
 
-/*
-uint32_t crear_pid(void){
-
-	pthread_mutex_lock(&mutex_generador_id);
-	uint32_t id = generador_de_id++;
-	pthread_mutex_unlock(&mutex_generador_id);
-
-	return id;
+void cambiar_multiprogramacion(char** parametros) {
+	sem_destroy(&sem_grado_multiprogramacion);
+	sem_init(&sem_grado_multiprogramacion, 0, atoi(parametros[0]));
 }
-*/
+
+
 t_list *crear_instrucciones(FILE* proc) {
 
 	char *op, *param1, *param2;

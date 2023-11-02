@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "transiciones_estado_pcb.h"
 #include "prioridad.h"
+#include "round_robin.h"
 #include "ready.h"
 
 sem_t sem_planificacion_l;
@@ -16,9 +17,6 @@ sem_t sem_planificacion_c;
 sem_t sem_grado_multiprogramacion;
 sem_t sem_new;
 //sem_t sem_lista_ready;
-
-//sem_t sem_seguir_admitiendo;
-//sem_t sem_seguir_finalizando;
 
 int plani_running;
 

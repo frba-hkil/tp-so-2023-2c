@@ -7,9 +7,10 @@
 #include <stdbool.h>
 #include <commons/collections/list.h>
 #include "ready.h"
+#include "kernel_global.h"
 
-t_pcb* prioridades(t_list*);
+void prioridades(t_list*);
 void* mayor_prioridad(void*, void*);
-bool tiene_mayor_prioridad(void*, void*);
+void check_higher_prio(t_pcb*);
 
 #endif /* SRC_PRIORIDAD_H_ */
