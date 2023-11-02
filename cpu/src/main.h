@@ -6,6 +6,8 @@
 #include <commons/error.h>
 #include "../../utils/src/utils.h"
 #include "../../utils/src/estructuras.h"
+#include "../../utils/src/serializador.h"
+
 
 char *nombres_registros[4] = {"AX", "BX", "CX", "DX"};
 

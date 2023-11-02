@@ -12,24 +12,6 @@ int main(int argc, char *argv[]) {
     // int socket_interrupt = iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_INTERRUPT"));
     // int socket_memoria = crear_conexion(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"));
 
-    // TEST
-    // t_list *instrucciones = list_create();
-    // list_add(instrucciones, crear_instruccion(SET, "AX", "10"));
-    // list_add(instrucciones, crear_instruccion(SET, "BX", "20"));
-    // list_add(instrucciones, crear_instruccion(SUM, "BX", "AX"));
-
-    // t_contexto_ejecucion *contexto = malloc(sizeof(t_contexto_ejecucion));
-	// contexto->registros = malloc(sizeof(t_registro));
-	// contexto->instrucciones = instrucciones;
-	// contexto->program_counter = 1;
-    
-    // ejecutarInstrucciones(contexto);
-
-    // printf("AX %d\n", contexto->registros->AX);
-    // printf("BX %d\n", contexto->registros->BX);
-    // printf("CX %d\n", contexto->registros->CX);
-    // printf("DX %d\n", contexto->registros->DX);
-
     config_destroy(cfg);
     return 0;
 }
@@ -70,10 +52,11 @@ uint32_t transform_value(t_contexto_ejecucion *contexto, char *val) {
 }
  
 void ejecutarInstrucciones(t_contexto_ejecucion *contexto) {
-
     while (contexto->program_counter<=list_size(contexto->instrucciones)) {
         t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter-1);
         contexto->program_counter++;
+        bool devolver;
+        t_protocolo protocolo;
 
         if (instruccion->identificador == SET) {
             set_registro(contexto, instruccion->primer_operando, transform_value(contexto, instruccion->segundo_operando));
@@ -87,12 +70,13 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto) {
             }
         } else if (instruccion->identificador == SLEEP) {
             //SLEEP (Tiempo): Esta instrucción representa una syscall bloqueante. Se deberá devolver el Contexto de Ejecución actualizado al Kernel junto a la cantidad de segundos que va a bloquearse el proceso.
+            devolver = true;
         } else if (instruccion->identificador == WAIT) {
             //WAIT (Recurso): Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro
-
+            devolver = true;
         } else if (instruccion->identificador == SIGNAL) {
             //SIGNAL (Recurso): Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro.
-
+            devolver = true;
         } else if (instruccion->identificador == MOV_IN) {
             //MOV_IN (Registro, Dirección Lógica): Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
 
@@ -101,26 +85,40 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto) {
 
         } else if (instruccion->identificador == F_OPEN) {
             //F_OPEN (Nombre Archivo, Modo Apertura): Esta instrucción solicita al kernel que abra el archivo pasado por parámetro con el modo de apertura indicado.
-
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
         } else if (instruccion->identificador == F_CLOSE) {
             //F_CLOSE (Nombre Archivo): Esta instrucción solicita al kernel que cierre el archivo pasado por parámetro.
-
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
         } else if (instruccion->identificador == F_SEEK) {
             //F_SEEK (Nombre Archivo, Posición): Esta instrucción solicita al kernel actualizar el puntero del archivo a la posición pasada por parámetro.
-
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
         } else if (instruccion->identificador == F_READ) {
             //F_READ (Nombre Archivo, Dirección Lógica): Esta instrucción solicita al Kernel que se lea del archivo indicado y se escriba en la dirección física de Memoria la información leída.
-
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
         } else if (instruccion->identificador == F_WRITE) {
             //F_WRITE (Nombre Archivo, Dirección Lógica): Esta instrucción solicita al Kernel que se escriba en el archivo indicado la información que es obtenida a partir de la dirección física de Memoria.
-
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;            
         } else if (instruccion->identificador == F_TRUNCATE) {
             //F_TRUNCATE (Nombre Archivo, Tamaño): Esta instrucción solicita al Kernel que se modifique el tamaño del archivo al indicado por parámetro.
-
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
         } else if (instruccion->identificador == EXIT) {
             //EXIT: Esta instrucción representa la syscall de finalización del proceso. Se deberá devolver el Contexto de Ejecución actualizado al Kernel para su finalización.
-
+            devolver = true;
+            protocolo = DESALOJO_POR_EXIT;
         }
-    }
-    
+
+        if (devolver) {
+            t_paquete *cntx = serializar_contexto_ejecucion(contexto, protocolo);
+            enviar_paquete(cntx, 0/*?????????????*/);
+
+
+            break;
+        }
+    }    
 }
