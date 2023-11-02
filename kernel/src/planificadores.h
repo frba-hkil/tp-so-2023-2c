@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <semaphore.h>
 #include <stdio.h>
+//#include <serializador.h>
 #include "transiciones_estado_pcb.h"
 #include "prioridad.h"
 #include "round_robin.h"
@@ -36,5 +37,6 @@ void plani_corto_pl(char*);
 
 void admitir_procesos(void);
 
+void fifo(t_list*);
 
 #endif /* SRC_PLANIFICADORES_H_ */

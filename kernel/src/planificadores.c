@@ -43,11 +43,11 @@ void plani_corto_pl(char* algoritmo) {
 	else if (string_equals_ignore_case(algoritmo, "round robin")) {
 		planificador = &round_robin;
 	}
-	/*
+
 	else {
 		planificador = &fifo;
 	}
-	*/
+
 
 	while(1) {
 
@@ -121,7 +121,32 @@ void finalizar_procesos(void) {
 }
 */
 
+void fifo(t_list* procesos_en_ready) {
+	t_pcb* pcb;
 
+	pthread_mutex_lock(&mutex_lista_ready);
+	pcb = list_remove(procesos_en_ready, 0);
+	pthread_mutex_unlock(&mutex_lista_ready);
+
+	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
+
+	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, PCB);
+	enviar_paquete(paquete, sockets[0]);
+	eliminar_paquete(paquete);
+	paquete = recibir_paquete(sockets[0]);
+
+	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
+
+	if(op_code != EXIT) {
+		pthread_mutex_lock(&mutex_lista_ready);
+		list_add(procesos_en_ready, pcb); //por ahora no pasa a estado bloqueado
+		pthread_mutex_unlock(&mutex_lista_ready);
+	}
+	else {
+		//mandarlo a cola de exit. (signal a hilo de finalizar proceso de planificador largo)
+		//hacer un signal de grado de multiprogramacion
+	}
+}
 
 
 
