@@ -5,6 +5,7 @@
 #include <commons/log.h>
 #include <commons/error.h>
 #include "../../utils/src/utils.h"
+#include "../../utils/src/conexiones.h"
 #include "../../utils/src/estructuras.h"
 #include "../../utils/src/serializador.h"
 #include <pthread.h>
