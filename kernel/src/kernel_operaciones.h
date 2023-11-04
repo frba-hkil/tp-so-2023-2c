@@ -41,7 +41,7 @@ void iniciar_planificacion(char** parametros);
 
 void detener_planificacion(char** parametros);
 
-uint32_t crear_pid(void);
+void cambiar_multiprogramacion(char** parametros);
 
 t_list *crear_instrucciones(FILE* proc);
 

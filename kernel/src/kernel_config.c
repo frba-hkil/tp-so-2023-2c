@@ -15,7 +15,7 @@ t_kernel_config *kernel_leer_configuracion(char *path) {
 	kernel_config->puerto_cpu_dispatch = string_duplicate(config_get_string_value(config, "PUERTO_CPU_DISPATCH"));
 	kernel_config->puerto_cpu_interrupt = string_duplicate(config_get_string_value(config, "PUERTO_CPU_INTERRUPT"));
 	kernel_config->algoritmo_planificacion = string_duplicate(config_get_string_value(config, "ALGORITMO_PLANIFICACION"));
-	kernel_config->quantum = config_get_double_value(config, "QUANTUM");
+	kernel_config->quantum = config_get_int_value(config, "QUANTUM");
 	kernel_config->recursos = string_duplicate(config_get_string_value(config, "RECURSOS"));
 	kernel_config->instancias_recursos = string_duplicate(config_get_string_value(config, "INSTANCIAS_RECURSOS"));
 	kernel_config->grado_multiprogramacion = config_get_int_value(config, "GRADO_MULTIPROGRAMACION_INI");

@@ -54,14 +54,14 @@ pthread_t thread_exit;
 
 // Planificador Corto Plazo
 t_queue *cola_new;
-extern t_list *cola_ready;
+//extern t_list *lista_ready;
 t_queue *cola_exec;
 t_queue *cola_blocked;
 sem_t sem_ready;
 sem_t sem_exec;
 sem_t sem_blocked;
 sem_t sem_desalojo;
-pthread_mutex_t mutex_ready;
+//extern pthread_mutex_t mutex_lista_ready;
 pthread_mutex_t mutex_blocked;
 pthread_mutex_t mutex_exec;
 pthread_t thread_ready;
