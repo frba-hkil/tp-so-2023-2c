@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     
     sockets.dispatch= iniciar_modulo_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_DISPATCH"), logger);
     sockets.interrupt = iniciar_modulo_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_INTERRUPT"), logger);
-    sockets.memoria = conectar_a_modulo(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"), logger);
+    //sockets.memoria = conectar_a_modulo(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"), logger);
 
     iniciar_hilos_cpu();
 
@@ -35,7 +35,7 @@ void hilo_dispatch() {
     while (1) {
         t_paquete *pqt = recibir_paquete(sockets.dispatch);
 
-        if (pqt != NULL) {
+        if (pqt->codigo_operacion == PCB) {
             t_contexto_ejecucion *cntx = malloc(sizeof(t_contexto_ejecucion));
             deserializar_contexto_ejecucion(cntx, pqt);
             ejecutarInstrucciones(cntx);
