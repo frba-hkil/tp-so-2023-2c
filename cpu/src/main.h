@@ -19,8 +19,9 @@ typedef struct {
 } t_sockets;
 
 t_sockets sockets;
+t_log *logger;
 
-void ejecutarInstrucciones(t_contexto_ejecucion *contexto);
+void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel);
 void set_registro(t_contexto_ejecucion *contexto, char *reg, u_int32_t val);
 void iniciar_hilos_cpu();
 void hilo_dispatch();

@@ -1,6 +1,5 @@
 #include "main.h"
 
-
 int main(int argc, char *argv[]) {
     t_config *cfg = config_create("./cpu.config");
     if (cfg == NULL) {
@@ -8,7 +7,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    t_log *logger = log_create("cpu.log", "CPU", true, LOG_LEVEL_INFO);
+    logger = log_create("cpu.log", "CPU", true, LOG_LEVEL_DEBUG);
 
     
     sockets.dispatch= iniciar_modulo_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_DISPATCH"), logger);
@@ -18,6 +17,7 @@ int main(int argc, char *argv[]) {
     iniciar_hilos_cpu();
 
     config_destroy(cfg);
+    log_destroy(logger);
     return 0;
 }
 
@@ -32,14 +32,21 @@ void iniciar_hilos_cpu() {
 }
 
 void hilo_dispatch() {
+    t_contexto_ejecucion *cntx = malloc(sizeof(t_contexto_ejecucion));
+
+    int socket_kernel = esperar_cliente(sockets.dispatch);
     while (1) {
-        t_paquete *pqt = recibir_paquete(sockets.dispatch);
+        t_paquete *pqt = recibir_paquete(socket_kernel);
 
         if (pqt->codigo_operacion == PCB) {
-            t_contexto_ejecucion *cntx = malloc(sizeof(t_contexto_ejecucion));
             deserializar_contexto_ejecucion(cntx, pqt);
-            ejecutarInstrucciones(cntx);
+
+            log_debug(logger, "CNTX DUMP PC->%d, AX->%d, BX->%d, CX->%d, DX->%d", cntx->program_counter, cntx->registros->AX, cntx->registros->BX, cntx->registros->CX, cntx->registros->DX);
+            ejecutarInstrucciones(cntx, socket_kernel);
+            log_debug(logger, "CNTX DUMP PC->%d, AX->%d, BX->%d, CX->%d, DX->%d", cntx->program_counter, cntx->registros->AX, cntx->registros->BX, cntx->registros->CX, cntx->registros->DX);
         }
+
+        eliminar_paquete(pqt);
     }
 }
 
@@ -82,11 +89,10 @@ uint32_t transform_value(t_contexto_ejecucion *contexto, char *val) {
     return atoi(val);
 }
  
-void ejecutarInstrucciones(t_contexto_ejecucion *contexto) {
+void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
     while (contexto->program_counter<=list_size(contexto->instrucciones)) {
         t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter-1); //mem-leak?
-        contexto->program_counter++;
-        bool devolver;
+        bool devolver = false;
         t_protocolo protocolo;
 
         if (instruccion->identificador == SET) {
@@ -146,9 +152,13 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto) {
 
         if (devolver) {
             t_paquete *cntx = serializar_contexto_ejecucion(contexto, protocolo);
-            enviar_paquete(cntx, sockets.dispatch);
+            enviar_paquete(cntx, socket_kernel);
 
             break;
         }
+
+        contexto->program_counter++;
     }    
+
+    contexto->program_counter--;
 }
