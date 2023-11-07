@@ -1,6 +1,5 @@
 #include "main.h"
 
-
 int main(int argc, char *argv[]) {
     t_config *cfg = config_create("./cpu.config");
     if (cfg == NULL) {
@@ -8,100 +7,158 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    int socket_dispatch = iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_DISPATCH"));
-    int socket_interrupt = iniciar_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_INTERRUPT"));
-    int socket_memoria = crear_conexion(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"));
+    logger = log_create("cpu.log", "CPU", true, LOG_LEVEL_DEBUG);
 
-    // TEST 
+    
+    sockets.dispatch= iniciar_modulo_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_DISPATCH"), logger);
+    sockets.interrupt = iniciar_modulo_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_INTERRUPT"), logger);
+    //sockets.memoria = conectar_a_modulo(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"), logger);
 
-    //t_pcb *testPcb = crear_pcb(1, 1, list_create(), 1, 1);
-
-    // char *code = string_new();
-    // string_append(&code, "SET AX 11\n");
-    // string_append(&code, "SET BX 50\n");
-    // string_append(&code, "SUM AX BX\n");
-    // string_append(&code, "SET CX 5\n");
-    // string_append(&code, "SUB BX CX\n");
-    // string_append(&code, "EXIT");
-
-    // procesarInstrucciones(code, testPcb);    
-
-    // printf("AX %d\n", testPcb->AX);
-    // printf("BX %d\n", testPcb->BX);
-    // printf("CX %d\n", testPcb->CX);
-    // printf("DX %d\n", testPcb->DX);
+    iniciar_hilos_cpu();
 
     config_destroy(cfg);
+    log_destroy(logger);
     return 0;
 }
 
-void procesarInstrucciones(char *codigo, t_pcb *pcb) {
-    char **rows = string_split(codigo, "\n"), **cells;
-    int i = 0;
+void iniciar_hilos_cpu() {
+    pthread_t t_hilo_dispatch, t_hilo_interrupt;
 
-    while (rows[i] != NULL) {
-        cells = string_split(rows[i], " ");
-        char *instruccion = cells[0];
-        char **args = NULL;
+    pthread_create(&t_hilo_dispatch, NULL, (void *)hilo_dispatch, NULL);
+    pthread_create(&t_hilo_interrupt, NULL, (void *)hilo_interrupt, NULL);
 
-        if (cells[1] != NULL) {
-            args = string_array_new();
-            int k = 1;
-
-            while (cells[k] != NULL) {
-                string_array_push(&args, cells[k]);
-                k++;
-            }
-        }
-
-        ejecutarInstruccion(instruccion, args, pcb);
-
-        i++;
-    } 
+    pthread_join(t_hilo_dispatch, NULL);
+    pthread_join(t_hilo_interrupt, NULL);
 }
 
-void set_registro(t_pcb *pcb, char *reg, u_int32_t val) {
+void hilo_dispatch() {
+    t_contexto_ejecucion *cntx = malloc(sizeof(t_contexto_ejecucion));
+
+    int socket_kernel = esperar_cliente(sockets.dispatch);
+    while (1) {
+        t_paquete *pqt = recibir_paquete(socket_kernel);
+
+        if (pqt->codigo_operacion == PCB) {
+            deserializar_contexto_ejecucion(cntx, pqt);
+
+            log_debug(logger, "CNTX DUMP PC->%d, AX->%d, BX->%d, CX->%d, DX->%d", cntx->program_counter, cntx->registros->AX, cntx->registros->BX, cntx->registros->CX, cntx->registros->DX);
+            ejecutarInstrucciones(cntx, socket_kernel);
+            log_debug(logger, "CNTX DUMP PC->%d, AX->%d, BX->%d, CX->%d, DX->%d", cntx->program_counter, cntx->registros->AX, cntx->registros->BX, cntx->registros->CX, cntx->registros->DX);
+        }
+
+        eliminar_paquete(pqt);
+    }
+}
+
+void hilo_interrupt() {
+
+}
+
+void set_registro(t_contexto_ejecucion *contexto, char *reg, u_int32_t val) {
     if (reg[0] == 'A') 
-        pcb->AX = val;
+        contexto->registros->AX = val;
     else if(reg[0] == 'B') 
-        pcb->BX = val;
+        contexto->registros->BX = val;
     else if(reg[0] == 'C') 
-        pcb->CX = val;
+        contexto->registros->CX = val;
     else if(reg[0] == 'D') 
-        pcb->DX = val;
+        contexto->registros->DX = val;
 }
 
  
-uint32_t get_registro(t_pcb *pcb, char *reg) {
+uint32_t get_registro(t_contexto_ejecucion *contexto, char *reg) {
     if (reg[0] == 'A') 
-        return pcb->AX;
+        return contexto->registros->AX;
     else if(reg[0] == 'B') 
-        return pcb->BX;
+        return contexto->registros->BX;
     else if(reg[0] == 'C') 
-        return pcb->CX;
+        return contexto->registros->CX;
     else if(reg[0] == 'D') 
-        return pcb->DX;
+        return contexto->registros->DX;
 
     return 0;
 }
 
-uint32_t transform_value(t_pcb *pcb, char *val) {
+uint32_t transform_value(t_contexto_ejecucion *contexto, char *val) {
     for (int i = 0; i < 4; i++) {
         if (strcmp(nombres_registros[i], val) == 0) {
-            return get_registro(pcb, val);
+            return get_registro(contexto, val);
         }
     }
 
     return atoi(val);
 }
+ 
+void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
+    while (contexto->program_counter<=list_size(contexto->instrucciones)) {
+        t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter-1); //mem-leak?
+        bool devolver = false;
+        t_protocolo protocolo;
 
-void ejecutarInstruccion(char *tipo, char **args, t_pcb *pcb) {
-    if (strcmp(tipo, "SET") == 0) {
-        set_registro(pcb, args[0], transform_value(pcb, args[1]));
-    } else if (strcmp(tipo, "SUM") == 0) {
-        set_registro(pcb, args[0], get_registro(pcb, args[0]) + get_registro(pcb, args[1]));
-    } else if (strcmp(tipo, "SUB") == 0) {
-        set_registro(pcb, args[0], get_registro(pcb, args[0]) - get_registro(pcb, args[1]));
-    }
+        if (instruccion->identificador == SET) {
+            set_registro(contexto, instruccion->primer_operando, transform_value(contexto, instruccion->segundo_operando));
+        } else if (instruccion->identificador == SUM) {
+            set_registro(contexto, instruccion->primer_operando, get_registro(contexto, instruccion->primer_operando) + get_registro(contexto, instruccion->segundo_operando));
+        } else if (instruccion->identificador == SUB) {
+            set_registro(contexto, instruccion->primer_operando, get_registro(contexto, instruccion->primer_operando) - get_registro(contexto, instruccion->segundo_operando));
+        } else if (instruccion->identificador == JNZ) {
+            if (get_registro(contexto, instruccion->primer_operando) != 0) {
+                contexto->program_counter = transform_value(contexto, instruccion->segundo_operando);
+            }
+        } else if (instruccion->identificador == SLEEP) {
+            //SLEEP (Tiempo): Esta instrucción representa una syscall bloqueante. Se deberá devolver el Contexto de Ejecución actualizado al Kernel junto a la cantidad de segundos que va a bloquearse el proceso.
+            devolver = true;
+        } else if (instruccion->identificador == WAIT) {
+            //WAIT (Recurso): Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro
+            devolver = true;
+        } else if (instruccion->identificador == SIGNAL) {
+            //SIGNAL (Recurso): Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro.
+            devolver = true;
+        } else if (instruccion->identificador == MOV_IN) {
+            //MOV_IN (Registro, Dirección Lógica): Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
+
+        } else if (instruccion->identificador == MOV_OUT) {
+            //MOV_OUT (Dirección Lógica, Registro): Lee el valor del Registro y lo escribe en la dirección física de memoria obtenida a partir de la Dirección Lógica.
+
+        } else if (instruccion->identificador == F_OPEN) {
+            //F_OPEN (Nombre Archivo, Modo Apertura): Esta instrucción solicita al kernel que abra el archivo pasado por parámetro con el modo de apertura indicado.
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
+        } else if (instruccion->identificador == F_CLOSE) {
+            //F_CLOSE (Nombre Archivo): Esta instrucción solicita al kernel que cierre el archivo pasado por parámetro.
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
+        } else if (instruccion->identificador == F_SEEK) {
+            //F_SEEK (Nombre Archivo, Posición): Esta instrucción solicita al kernel actualizar el puntero del archivo a la posición pasada por parámetro.
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
+        } else if (instruccion->identificador == F_READ) {
+            //F_READ (Nombre Archivo, Dirección Lógica): Esta instrucción solicita al Kernel que se lea del archivo indicado y se escriba en la dirección física de Memoria la información leída.
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
+        } else if (instruccion->identificador == F_WRITE) {
+            //F_WRITE (Nombre Archivo, Dirección Lógica): Esta instrucción solicita al Kernel que se escriba en el archivo indicado la información que es obtenida a partir de la dirección física de Memoria.
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;            
+        } else if (instruccion->identificador == F_TRUNCATE) {
+            //F_TRUNCATE (Nombre Archivo, Tamaño): Esta instrucción solicita al Kernel que se modifique el tamaño del archivo al indicado por parámetro.
+            devolver = true;
+            protocolo = DESALOJO_POR_IO;
+        } else if (instruccion->identificador == EXIT) {
+            //EXIT: Esta instrucción representa la syscall de finalización del proceso. Se deberá devolver el Contexto de Ejecución actualizado al Kernel para su finalización.
+            devolver = true;
+            protocolo = DESALOJO_POR_EXIT;
+        }
+
+        if (devolver) {
+            t_paquete *cntx = serializar_contexto_ejecucion(contexto, protocolo);
+            enviar_paquete(cntx, socket_kernel);
+
+            break;
+        }
+
+        contexto->program_counter++;
+    }    
+
+    contexto->program_counter--;
 }
-
