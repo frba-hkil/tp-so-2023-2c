@@ -34,15 +34,16 @@ void iniciar_hilos_cpu() {
 void hilo_dispatch() {
     t_contexto_ejecucion *cntx = malloc(sizeof(t_contexto_ejecucion));
 
-    int socket_kernel = esperar_cliente(sockets.dispatch);
+    int socket_cliente = esperar_cliente(sockets.dispatch);
+    log_info(logger, "Cliente dispatch conectado");
     while (1) {
-        t_paquete *pqt = recibir_paquete(socket_kernel);
+        t_paquete *pqt = recibir_paquete(socket_cliente);
 
         if (pqt->codigo_operacion == PCB) {
             deserializar_contexto_ejecucion(cntx, pqt);
 
             log_debug(logger, "CNTX DUMP PC->%d, AX->%d, BX->%d, CX->%d, DX->%d", cntx->program_counter, cntx->registros->AX, cntx->registros->BX, cntx->registros->CX, cntx->registros->DX);
-            ejecutarInstrucciones(cntx, socket_kernel);
+            ejecutarInstrucciones(cntx, socket_cliente);
             log_debug(logger, "CNTX DUMP PC->%d, AX->%d, BX->%d, CX->%d, DX->%d", cntx->program_counter, cntx->registros->AX, cntx->registros->BX, cntx->registros->CX, cntx->registros->DX);
         }
 
@@ -51,7 +52,17 @@ void hilo_dispatch() {
 }
 
 void hilo_interrupt() {
+    int socket_cliente = esperar_cliente(sockets.interrupt);
+    log_info(logger, "Cliente interrupt conectado");
+    while (1) { 
+        t_paquete *pqt = recibir_paquete(socket_cliente);
 
+        if (pqt->codigo_operacion==DESALOJAR_PROCESO) {
+            desalojar = true;
+        }
+
+        eliminar_paquete(pqt);
+    }
 }
 
 void set_registro(t_contexto_ejecucion *contexto, char *reg, u_int32_t val) {
@@ -148,6 +159,12 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
             //EXIT: Esta instrucción representa la syscall de finalización del proceso. Se deberá devolver el Contexto de Ejecución actualizado al Kernel para su finalización.
             devolver = true;
             protocolo = DESALOJO_POR_EXIT;
+        }
+
+        if (desalojar) {
+            devolver = true;
+            protocolo = DESALOJO_POR_IRQ;
+            desalojar = false;
         }
 
         if (devolver) {

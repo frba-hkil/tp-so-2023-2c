@@ -18,6 +18,8 @@ typedef struct {
     int memoria;
 } t_sockets;
 
+
+bool desalojar = false;
 t_sockets sockets;
 t_log *logger;
 
