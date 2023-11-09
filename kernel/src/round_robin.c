@@ -12,14 +12,14 @@ void round_robin(t_list* procesos_en_ready) {
 	pthread_mutex_unlock(&mutex_lista_ready);
 
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
-	//t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, PCB); dice pcb, pero en realidad solo se intercambian el contexto del proceso
-	//enviar_paquete(packet, sockets[SOCK_DISPATCH]);
-	//eliminar_paquete(packet);
+	t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
+	enviar_paquete(packet, sockets[SOCK_DISPATCH]);
+	eliminar_paquete(packet);
 	pthread_create(&thread_quantum, NULL, (void*)contar_quantum, NULL);
 	pthread_detach(thread_quantum);
-	//packet = recibir_paquete(sockets[SOCK_DISPATCH]);
+	packet = recibir_paquete(sockets[SOCK_DISPATCH]);
 	contexto_devuelto = true;
-	//deserializar_contexto_ejecucion(pcb->contexto, packet); //memory leak; se pierde referencia del contexto antes de ser actualizado. TODO: implementar destruir_contexto_ejecucion().
+	deserializar_contexto_ejecucion(pcb->contexto, packet); //memory leak; se pierde referencia del contexto antes de ser actualizado. TODO: implementar destruir_contexto_ejecucion().
 
 	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
 

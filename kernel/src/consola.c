@@ -9,13 +9,14 @@ void iniciar_consola(void){
 	pthread_create(&console_thread, NULL, (void*)console_handler, NULL);
 
 }
-
+/*
 void* console_routine(void* arg){
 	void (*consola)(void) = (void (*)(void))arg;
 	consola();
 
 	return NULL;
 }
+*/
 
 void console_handler(void){
 	char* input;

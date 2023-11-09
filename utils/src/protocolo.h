@@ -16,7 +16,8 @@ typedef enum {
 	PROCESO_SUSPENDIDO,				// Protocolo que envia Memoria a Kernel para indicar que se libero la memoria del proceso
 	PROCESO_FINALIZADO,				// Protocolo que envia Memoria a Kernel para indicar que se libero la memoria y se elimino el archivo SWAP
 
-	PCB,							// Protocolo que usan Kernel, CPU y Memoria e indica el envio de la estructura PCB
+	PCB,							// Protocolo que usan Kernel, CPU y Memoria e indica el envio de la estructura de PCB
+	CONTEXTO_EJECUCION,				// Protocolo que usan Kernel, CPU y Memoria e indica el envio de la estructura contexto de ejecucion de la PCB
 
 	DESALOJAR_PROCESO,          	// Protocolo que envia Kernel a CPU para indicar que desaloje el proceso en ejecucion
 	DESALOJO_POR_IO,				// Protocolo que envia CPU a Kernel para indicar que el proceso fue desalojado por ejecutar IO
