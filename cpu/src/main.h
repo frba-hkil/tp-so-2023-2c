@@ -28,5 +28,6 @@ void set_registro(t_contexto_ejecucion *contexto, char *reg, u_int32_t val);
 void iniciar_hilos_cpu();
 void hilo_dispatch();
 void hilo_interrupt();
+char *getInstruccionLabel(t_op_code iId);
 uint32_t get_registro(t_contexto_ejecucion *contexto, char *reg);
 uint32_t transform_value(t_contexto_ejecucion *contexto, char *val);

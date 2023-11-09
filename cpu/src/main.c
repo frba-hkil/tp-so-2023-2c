@@ -76,7 +76,6 @@ void set_registro(t_contexto_ejecucion *contexto, char *reg, u_int32_t val) {
         contexto->registros->DX = val;
 }
 
- 
 uint32_t get_registro(t_contexto_ejecucion *contexto, char *reg) {
     if (reg[0] == 'A') 
         return contexto->registros->AX;
@@ -100,9 +99,31 @@ uint32_t transform_value(t_contexto_ejecucion *contexto, char *val) {
     return atoi(val);
 }
  
+char *getInstruccionLabel(t_op_code iId){
+    if (iId == SET) return "SET";
+    else if (iId == SUM) return "SUM";
+    else if (iId == SUB) return "SUB";
+    else if (iId == JNZ) return "JNZ";
+    else if (iId == SLEEP) return "SLEEP";
+    else if (iId == WAIT) return "WAIT";
+    else if (iId == SIGNAL) return "SIGNAL";
+    else if (iId == MOV_IN) return "MOV_IN";
+    else if (iId == MOV_OUT) return "MOV_OUT";
+    else if (iId == F_OPEN) return "F_OPEN";
+    else if (iId == F_CLOSE) return "F_CLOSE";
+    else if (iId == F_SEEK) return "F_SEEK";
+    else if (iId == F_READ) return "F_READ";
+    else if (iId == F_WRITE) return "F_WRITE";
+    else if (iId == F_TRUNCATE) return "F_TRUNCATE";
+    else if (iId == EXIT) return "EXIT";
+
+    return "";
+}
+
 void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
     while (contexto->program_counter<=list_size(contexto->instrucciones)) {
-        t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter-1); //mem-leak?
+        t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter-1);
+        log_info(logger, "PID: %d - FETCH - Program Counter: %d", contexto->pid, contexto->program_counter);
         bool devolver = false;
         t_protocolo protocolo;
 
@@ -127,10 +148,11 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
             devolver = true;
         } else if (instruccion->identificador == MOV_IN) {
             //MOV_IN (Registro, Dirección Lógica): Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
+            log_info(logger, "PID: %d - Accion: LEER - Direccion Fisica: <DIRECCION_FISICA> - Valor: <VALOR_LEIDO>", contexto->pid);
 
         } else if (instruccion->identificador == MOV_OUT) {
             //MOV_OUT (Dirección Lógica, Registro): Lee el valor del Registro y lo escribe en la dirección física de memoria obtenida a partir de la Dirección Lógica.
-
+            log_info(logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: <DIRECCION_FISICA> - Valor: <VALOR_ESCRITO>", contexto->pid);
         } else if (instruccion->identificador == F_OPEN) {
             //F_OPEN (Nombre Archivo, Modo Apertura): Esta instrucción solicita al kernel que abra el archivo pasado por parámetro con el modo de apertura indicado.
             devolver = true;
@@ -160,6 +182,8 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
             devolver = true;
             protocolo = DESALOJO_POR_EXIT;
         }
+
+        log_info(logger, "PID: %d - Ejecutando: %s - %s %s", contexto->program_counter, getInstruccionLabel(instruccion->identificador), instruccion->primer_operando, instruccion->segundo_operando);
 
         if (desalojar) {
             devolver = true;
