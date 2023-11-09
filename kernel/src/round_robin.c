@@ -37,7 +37,7 @@ void round_robin(t_list* procesos_en_ready) {
 		//hacer un signal de grado de multiprogramacion
 	}
 
-	//eliminar_paquete(packet);
+	eliminar_paquete(packet);
 
 }
 
@@ -47,7 +47,7 @@ void contar_quantum(void) {
 	sleep(timer);
 	if(!contexto_devuelto) {
 		log_info(kernel_logger, "termino quantum");
-		//enviar_mensaje("fin_quantum", DESALOJAR_PROCESO, sockets[SOCK_INT]);
+		enviar_mensaje("fin_quantum", DESALOJAR_PROCESO, sockets[SOCK_CPU_INT]);
 	}
 
 }

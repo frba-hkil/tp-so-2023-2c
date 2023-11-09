@@ -21,9 +21,11 @@ void prioridades(t_list* procesos_en_ready) {
 		pthread_mutex_unlock(&mutex_lista_ready);
 	}
 
+	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
 	t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, PCB);
 	enviar_paquete(packet, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(packet);
+
 	pthread_create(&thread_check, NULL, (void*)check_higher_prio, pcb);
 	pthread_detach(thread_check);
 	packet = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
@@ -46,8 +48,7 @@ void prioridades(t_list* procesos_en_ready) {
 		//hacer un signal de grado de multiprogramacion
 	}
 
-
-	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
+	eliminar_paquete(packet);
 }
 
 void* mayor_prioridad(void* pcb1, void* pcb2) {
@@ -66,7 +67,7 @@ void check_higher_prio(t_pcb* proceso_en_exec) {
 		pcb = list_get_minimum(lista_ready, mayor_prioridad);
 		pthread_mutex_unlock(&mutex_lista_ready);
 		if(pcb != proceso_en_exec) {
-			//enviar_mensaje("mayor_prio", DESALOJAR_PROCESO, sockets[SOCK_INT]);
+			enviar_mensaje("mayor_prio", DESALOJAR_PROCESO, sockets[SOCK_CPU_INT]);
 		}
 	}
 }

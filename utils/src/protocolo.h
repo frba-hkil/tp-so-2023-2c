@@ -4,13 +4,8 @@
 #include <stdint.h>
 
 typedef enum {
-	DEBUG_MENSAJE = 1,
-	DEBUG_PAQUETE,
 
-	DATOS_CONSOLA,					// Protocolo que envia Consola a Kernel para indicar el envio de instrucciones y tamanio del proceso
-	FINALIZAR_CONSOLA,				// Protocolo que envia Kernel a Consola para indicar la finalizacion de la consola
-
-	INICIALIZACION_DE_PROCESO,		// Protocolo que envia Kernel a Memoria para indicarle que cree las estructuras necesarias y devuelva el numero de tabla de pagina
+	INICIALIZACION_DE_PROCESO = 1,		// Protocolo que envia Kernel a Memoria para indicarle que cree las estructuras necesarias y devuelva el numero de tabla de pagina
 	SUSPENSION_DE_PROCESO,			// Protocolo que envia Kernel a Memoria para indicar que se debe liberar el espacio de memoria del procesos y escribir en SWAP
 	FINALIZACION_DE_PROCESO,		// Protocolo que envia Kernel a Memoria para indicar que se debe liberar la memoria y eliminar el archivo SWAP
 	PROCESO_SUSPENDIDO,				// Protocolo que envia Memoria a Kernel para indicar que se libero la memoria del proceso
