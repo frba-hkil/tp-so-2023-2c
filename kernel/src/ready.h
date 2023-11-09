@@ -6,6 +6,7 @@
 #include <semaphore.h>
 #include <commons/collections/list.h>
 #include <estructuras.h>
+#include "kernel_conexiones.h"
 
 extern t_list* lista_ready;
 

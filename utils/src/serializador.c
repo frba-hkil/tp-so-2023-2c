@@ -3,25 +3,6 @@
 t_paquete *serializar_instrucciones(t_list *instrucciones, t_protocolo protocolo);
 t_list *deserializar_instrucciones(t_list *datos, uint32_t longitud_datos);
 
-
-t_paquete *serializar_consola(t_consola *consola, t_protocolo protocolo) {
-	t_paquete *paquete = serializar_instrucciones(consola->instrucciones, protocolo);
-	agregar_a_paquete(paquete, &(consola->tamanio), sizeof(uint32_t));
-
-	return paquete;
-}
-
-t_consola *deserializar_consola(t_paquete *paquete) {
-	t_list *datos = deserealizar_paquete(paquete);
-	t_consola *consola = malloc(sizeof(t_consola));
-
-	consola->instrucciones = deserializar_instrucciones(datos, list_size(datos) - 1);
-	consola->tamanio = *(uint32_t *)list_get(datos, list_size(datos) - 1);
-
-	list_destroy_and_destroy_elements(datos, free);
-	return consola;
-}
-
 t_paquete *serializar_contexto_ejecucion(t_contexto_ejecucion *ce, t_protocolo protocolo) {
     t_paquete *paquete = serializar_instrucciones(ce->instrucciones, protocolo);
 
