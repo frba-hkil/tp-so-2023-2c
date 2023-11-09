@@ -199,6 +199,7 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
         }
 
         contexto->program_counter++;
+        free(instruccion);
     }    
 
     contexto->program_counter--;
