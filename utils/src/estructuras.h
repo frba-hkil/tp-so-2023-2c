@@ -32,9 +32,7 @@ typedef enum {
 	READY,
 	EXEC,
 	BLOCKED,
-	_EXIT,
-	//SUSPENDED_BLOCKED,
-	//SUSPENDED_READY
+	_EXIT
 } t_estado;
 
 typedef struct {
@@ -42,11 +40,6 @@ typedef struct {
 	char* primer_operando;
 	char* segundo_operando;
 } t_instruccion;
-
-typedef struct {
-	t_list *instrucciones;
-	uint32_t tamanio;
-} t_consola;
 
 typedef struct {
 	uint32_t AX;
@@ -84,6 +77,7 @@ typedef struct {
 
 t_instruccion *crear_instruccion(t_op_code identificador, char* primer_operando, char* segundo_operando);
 void eliminar_instrucciones(t_list *instrucciones);
+void eliminar_contexto_ejecucion(t_contexto_ejecucion* ce);
 t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, uint32_t program_counter, uint32_t prioridad);
 void eliminar_pcb(t_pcb *pcb);
 t_traductor *crear_traductor_direcciones(int entradas_tabla, int tamanio_pagina);

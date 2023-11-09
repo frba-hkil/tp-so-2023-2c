@@ -131,9 +131,9 @@ void fifo(t_list* procesos_en_ready) {
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
 
 	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, PCB);
-	enviar_paquete(paquete, sockets[0]);
+	enviar_paquete(paquete, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(paquete);
-	paquete = recibir_paquete(sockets[0]);
+	paquete = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
 
 	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
 

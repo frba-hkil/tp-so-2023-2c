@@ -22,10 +22,17 @@ void prioridades(t_list* procesos_en_ready) {
 	}
 
 	t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, PCB);
-	enviar_paquete(packet, sockets[0]); //reemplazar los constantes por SOCK_CPU_DISPATCH
+	enviar_paquete(packet, sockets[SOCK_CPU_DISPATCH]);
+	eliminar_paquete(packet);
 	pthread_create(&thread_check, NULL, (void*)check_higher_prio, pcb);
-	recibir_paquete(sockets[0]);
+	pthread_detach(thread_check);
+	packet = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
 	contexto_devuelto = true;
+
+	eliminar_contexto_ejecucion(pcb->contexto);
+	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
+
+	deserializar_contexto_ejecucion(pcb->contexto, packet);
 
 	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
 
@@ -58,7 +65,7 @@ void check_higher_prio(t_pcb* proceso_en_exec) {
 		pthread_cond_wait(&cond_ready_agregado, &mutex_lista_ready);
 		pcb = list_get_minimum(lista_ready, mayor_prioridad);
 		pthread_mutex_unlock(&mutex_lista_ready);
-		if(pcb == proceso_en_exec) {
+		if(pcb != proceso_en_exec) {
 			//enviar_mensaje("mayor_prio", DESALOJAR_PROCESO, sockets[SOCK_INT]);
 		}
 	}
