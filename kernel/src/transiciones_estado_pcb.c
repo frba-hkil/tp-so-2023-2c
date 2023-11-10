@@ -18,9 +18,37 @@ void pcb_new_a_ready(t_pcb* _pcb) {
 }
 
 void pcb_a_exit(t_pcb *_pcb) {
+	char *estado = estado_a_string(_pcb->contexto->pid);
+
+	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <EXIT>", estado, _pcb->contexto->pid);
 
 	_pcb->estado = EXIT;
 	//liberar_recursos(_pcb);
-	printf("exit PID: %d \n", _pcb->contexto->pid);
 
+	eliminar_pcb(_pcb);
+	free(estado);
+
+}
+
+char* estado_a_string(int estado) {
+	char *c_estado = malloc(8*sizeof(char));
+
+	switch(estado){
+	case NEW:
+		strcpy(c_estado, "NEW");
+		break;
+	case READY:
+		strcpy(c_estado, "READY");
+		break;
+	case EXEC:
+		strcpy(c_estado, "EXEC");
+		break;
+	case BLOCKED:
+		strcpy(c_estado, "BLOCKED");
+		break;
+	default:
+		strcpy(c_estado, "EXIT");
+	}
+
+	return c_estado;
 }

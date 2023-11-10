@@ -13,6 +13,12 @@ void eliminar_instrucciones(t_list *instrucciones) {
 	list_destroy_and_destroy_elements(instrucciones, free);
 }
 
+void eliminar_contexto_ejecucion(t_contexto_ejecucion* ce) {
+	eliminar_instrucciones(ce->instrucciones);
+	free(ce->registros);
+	free(ce);
+}
+
 t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, uint32_t program_counter, uint32_t prioridad) {
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
@@ -29,7 +35,7 @@ t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, u
 }
 
 void eliminar_pcb(t_pcb *pcb) {
-	eliminar_instrucciones(pcb->contexto->instrucciones);
+	eliminar_contexto_ejecucion(pcb->contexto);
 	free(pcb);
 }
 

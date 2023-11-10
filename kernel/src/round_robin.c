@@ -12,14 +12,18 @@ void round_robin(t_list* procesos_en_ready) {
 	pthread_mutex_unlock(&mutex_lista_ready);
 
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
-	//t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, PCB); dice pcb, pero en realidad solo se intercambian el contexto del proceso
-	//enviar_paquete(packet, sockets[SOCK_DISPATCH]);
-	//eliminar_paquete(packet);
+	t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
+	enviar_paquete(packet, sockets[SOCK_CPU_DISPATCH]);
+	eliminar_paquete(packet);
 	pthread_create(&thread_quantum, NULL, (void*)contar_quantum, NULL);
 	pthread_detach(thread_quantum);
-	//packet = recibir_paquete(sockets[SOCK_DISPATCH]);
+	packet = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
 	contexto_devuelto = true;
-	//deserializar_contexto_ejecucion(pcb->contexto, packet); //memory leak; se pierde referencia del contexto antes de ser actualizado. TODO: implementar destruir_contexto_ejecucion().
+
+	eliminar_contexto_ejecucion(pcb->contexto);
+	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
+
+	deserializar_contexto_ejecucion(pcb->contexto, packet);
 
 	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
 
@@ -33,7 +37,7 @@ void round_robin(t_list* procesos_en_ready) {
 		//hacer un signal de grado de multiprogramacion
 	}
 
-	//eliminar_paquete(packet);
+	eliminar_paquete(packet);
 
 }
 
@@ -43,7 +47,7 @@ void contar_quantum(void) {
 	sleep(timer);
 	if(!contexto_devuelto) {
 		log_info(kernel_logger, "termino quantum");
-		//enviar_mensaje("fin_quantum", DESALOJAR_PROCESO, sockets[SOCK_INT]);
+		enviar_mensaje("fin_quantum", DESALOJAR_PROCESO, sockets[SOCK_CPU_INT]);
 	}
 
 }

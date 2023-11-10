@@ -105,21 +105,21 @@ void admitir_procesos(void) {
 	}
 }
 
-/*
+
 void finalizar_procesos(void) {
 
 	while(1) {
 
 		sem_wait(&sem_exit);
-		sem_wait(&sem_seguir_finalizando);
 		pthread_mutex_lock(&mutex_exit);
 		t_pcb *pcb_exit = queue_pop(cola_exit);
 		pthread_mutex_unlock(&mutex_exit);
 
 		pcb_a_exit(pcb_exit);
+		sem_post(&sem_grado_multiprogramacion);
 	}
 }
-*/
+
 
 void fifo(t_list* procesos_en_ready) {
 	t_pcb* pcb;
@@ -131,9 +131,9 @@ void fifo(t_list* procesos_en_ready) {
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
 
 	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, PCB);
-	enviar_paquete(paquete, sockets[0]);
+	enviar_paquete(paquete, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(paquete);
-	paquete = recibir_paquete(sockets[0]);
+	paquete = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
 
 	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
 
@@ -143,6 +143,10 @@ void fifo(t_list* procesos_en_ready) {
 		pthread_mutex_unlock(&mutex_lista_ready);
 	}
 	else {
+		pthread_mutex_lock(&mutex_exit);
+		queue_push(cola_exit, pcb);
+		pthread_mutex_unlock(&mutex_exit);
+		sem_post(&sem_exit);
 		//mandarlo a cola de exit. (signal a hilo de finalizar proceso de planificador largo)
 		//hacer un signal de grado de multiprogramacion
 	}
