@@ -39,7 +39,7 @@ void hilo_dispatch() {
     while (1) {
         t_paquete *pqt = recibir_paquete(socket_cliente);
 
-        if (pqt->codigo_operacion == PCB) {
+        if (pqt->codigo_operacion == CONTEXTO_EJECUCION) {
             deserializar_contexto_ejecucion(cntx, pqt);
 
             log_debug(logger, "CNTX DUMP PC->%d, AX->%d, BX->%d, CX->%d, DX->%d", cntx->program_counter, cntx->registros->AX, cntx->registros->BX, cntx->registros->CX, cntx->registros->DX);
