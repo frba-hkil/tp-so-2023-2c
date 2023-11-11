@@ -25,6 +25,7 @@ void round_robin(t_list* procesos_en_ready) {
 
 	deserializar_contexto_ejecucion(pcb->contexto, packet);
 
+
 	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
 
 	if(op_code != EXIT) {
@@ -32,6 +33,8 @@ void round_robin(t_list* procesos_en_ready) {
 		list_add(procesos_en_ready, pcb); //por ahora no pasa a estado bloqueado
 		pthread_mutex_unlock(&mutex_lista_ready);
 	}
+
+
 	else {
 		//mandarlo a cola de exit. (signal a hilo de finalizar proceso de planificador largo)
 		//hacer un signal de grado de multiprogramacion

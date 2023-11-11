@@ -14,6 +14,7 @@ void escuchar_consola(void) {
 	command_handlers[3] = iniciar_planificacion;
 	command_handlers[4] = cambiar_multiprogramacion;
 	cola_new = queue_create();
+	cola_exit = queue_create();
 	pthread_mutex_init(&mutex_new, NULL);
 	pthread_mutex_init(&mutex_plani_running, NULL);
 	sem_init(&sem_planificacion_l, 0, 0);

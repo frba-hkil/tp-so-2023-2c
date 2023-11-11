@@ -36,6 +36,8 @@ void plani_largo_pl(void) {
 
 void plani_corto_pl(char* algoritmo) {
 	void (*planificador)(t_list*);
+	cola_blocked_sleep = queue_create();
+	pthread_t thread_atender_blocked;
 
 	if(string_equals_ignore_case(algoritmo, "prioridades"))
 		planificador = &prioridades;
@@ -48,6 +50,7 @@ void plani_corto_pl(char* algoritmo) {
 		planificador = &fifo;
 	}
 
+	pthread_create(&thread_atender_blocked, NULL, (void*)atender_bloqueados , NULL);
 
 	while(1) {
 
@@ -59,6 +62,7 @@ void plani_corto_pl(char* algoritmo) {
 			sleep(1);
 			sem_wait(&sem_lista_ready); // si no hay mas procesos en ready se pausa
 			//pthread_mutex_lock(&mutex_lista_ready);
+
 			planificador(lista_ready);
 			//pthread_mutex_unlock(&mutex_lista_ready);
 			//log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb_a_ejecutar->contexto->pid);
@@ -107,12 +111,13 @@ void admitir_procesos(void) {
 
 
 void finalizar_procesos(void) {
+	t_pcb *pcb_exit;
 
 	while(1) {
 
 		sem_wait(&sem_exit);
 		pthread_mutex_lock(&mutex_exit);
-		t_pcb *pcb_exit = queue_pop(cola_exit);
+		pcb_exit = queue_pop(cola_exit);
 		pthread_mutex_unlock(&mutex_exit);
 
 		pcb_a_exit(pcb_exit);
@@ -152,7 +157,9 @@ void fifo(t_list* procesos_en_ready) {
 	}
 }
 
+void atender_bloqueados(void) {
 
+}
 
 
 

@@ -20,7 +20,7 @@ void pcb_new_a_ready(t_pcb* _pcb) {
 void pcb_a_exit(t_pcb *_pcb) {
 	char *estado = estado_a_string(_pcb->contexto->pid);
 
-	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <EXIT>", estado, _pcb->contexto->pid);
+	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <%s> - Estado Actual: <EXIT>", _pcb->contexto->pid, estado);
 
 	_pcb->estado = EXIT;
 	//liberar_recursos(_pcb);
