@@ -1,7 +1,7 @@
 #include "main.h"
 
 int main(int argc, char *argv[]) {
-    t_config *cfg = config_create("./cpu.config");
+    t_config *cfg = config_create("../cpu.config");
     if (cfg == NULL) {
         error_show("El archivo de configuracion no existe");
         return EXIT_FAILURE;
@@ -101,8 +101,8 @@ uint32_t transform_value(t_contexto_ejecucion *contexto, char *val) {
 }
  
 void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
-    while (contexto->program_counter<=list_size(contexto->instrucciones)) {
-        t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter-1); //mem-leak?
+    while (contexto->program_counter<list_size(contexto->instrucciones)) {
+        t_instruccion *instruccion = list_get(contexto->instrucciones, contexto->program_counter); //mem-leak?
         bool devolver = false;
         t_protocolo protocolo;
 
@@ -168,14 +168,15 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
         }
 
         if (devolver) {
+        	log_info(logger, "exit: PID %d", contexto->pid);
             t_paquete *cntx = serializar_contexto_ejecucion(contexto, protocolo);
             enviar_paquete(cntx, socket_kernel);
 
             break;
         }
 
-        contexto->program_counter++;
+        ++(contexto->program_counter);
     }    
 
-    contexto->program_counter--;
+    //++(contexto->program_counter);
 }

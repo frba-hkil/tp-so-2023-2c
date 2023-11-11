@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
 	}
 	kernel_config = kernel_leer_configuracion(argv[1]);
 
-    //iniciar_conexiones_kernel(sockets);
+    iniciar_conexiones_kernel(sockets);
 
     iniciar_consola();
     sleep(1);

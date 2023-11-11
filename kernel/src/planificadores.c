@@ -18,7 +18,7 @@ void plani_largo_pl(void) {
 
 			if(!hilos_creados) {
 				pthread_create(&thread_admitir, NULL, (void*) admitir_procesos, NULL);
-				//pthread_create(&thread_finalizar, NULL, (void*) finalizar_procesos, NULL);
+				pthread_create(&thread_finalizar, NULL, (void*) finalizar_procesos, NULL);
 				hilos_creados = 1;
 			}
 			//pthread_mutex_unlock(&mutex_plani_running);
@@ -134,13 +134,23 @@ void fifo(t_list* procesos_en_ready) {
 	pthread_mutex_unlock(&mutex_lista_ready);
 
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
+	pcb->estado = EXEC;
+	log_info(kernel_logger, "PID: <%d> - Estado : %d", pcb->contexto->pid, pcb->estado);
 
 	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, PCB);
 	enviar_paquete(paquete, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(paquete);
 	paquete = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
 
-	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
+	eliminar_contexto_ejecucion(pcb->contexto);
+	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
+
+	deserializar_contexto_ejecucion(pcb->contexto, paquete);
+	//print_pcb(kernel_logger, pcb);
+
+	t_instruccion inst = *(t_instruccion*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
+	int op_code = inst.identificador;
+	log_debug(kernel_logger, "contexto devuelto con op code: %d", op_code);
 
 	if(op_code != EXIT) {
 		pthread_mutex_lock(&mutex_lista_ready);
@@ -152,8 +162,6 @@ void fifo(t_list* procesos_en_ready) {
 		queue_push(cola_exit, pcb);
 		pthread_mutex_unlock(&mutex_exit);
 		sem_post(&sem_exit);
-		//mandarlo a cola de exit. (signal a hilo de finalizar proceso de planificador largo)
-		//hacer un signal de grado de multiprogramacion
 	}
 }
 

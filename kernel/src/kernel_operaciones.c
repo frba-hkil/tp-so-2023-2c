@@ -1,8 +1,6 @@
 #include "kernel_operaciones.h"
 
-char *op_strings[] = {"NO_OP", "SET", "SUM", "SUB", "JNZ", "SLEEP", "WAIT", "SIGNAL",
-                                "MOV_IN", "MOV_OUT", "F_OPEN", "F_CLOSE", "F_SEEK", "F_WRITE",
-                                "F_TRUNCATE", "EXIT"};
+char *op_strings[] = {"SET", "SUM", "SUB", "JNZ", "SLEEP", "WAIT", "SIGNAL", "MOV_IN", "MOV_OUT", "F_OPEN", "F_CLOSE", "F_SEEK", "F_READ", "F_WRITE", "F_TRUNCATE", "EXIT"};
 
 
 void escuchar_consola(void) {
@@ -21,7 +19,7 @@ void escuchar_consola(void) {
 	sem_init(&sem_planificacion_c, 0, 0);
 	sem_init(&sem_grado_multiprogramacion, 0, kernel_config->grado_multiprogramacion);
 	sem_init(&sem_new, 0, 0);
-	//sem_init(&sem_exit, 0, 0);
+	sem_init(&sem_exit, 0, 0);
 
 	//sleep(1);
 	pthread_create(&plani_largo_thread, NULL, (void*) plani_largo_pl, NULL);
