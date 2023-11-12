@@ -19,7 +19,7 @@ sem_t sem_grado_multiprogramacion;
 sem_t sem_new;
 //sem_t sem_lista_ready;
 
-int plani_running;
+//int plani_running;
 
 extern pthread_mutex_t mutex_plani_running;
 pthread_cond_t cond_plani_running;
@@ -37,6 +37,10 @@ void plani_corto_pl(char*);
 
 void admitir_procesos(void);
 
+void finalizar_procesos(void);
+
 void fifo(t_list*);
+
+void atender_bloqueados(void);
 
 #endif /* SRC_PLANIFICADORES_H_ */

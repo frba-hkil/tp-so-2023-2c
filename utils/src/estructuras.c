@@ -30,6 +30,11 @@ t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, u
 	pcb->contexto->program_counter = program_counter;
 	pcb->prioridad = prioridad;
 	pcb->estado = NEW;
+	pcb->contexto->registros->AX = 0;
+	pcb->contexto->registros->BX = 0;
+	pcb->contexto->registros->CX = 0;
+	pcb->contexto->registros->DX = 0;
+
 
 	return pcb;
 }

@@ -68,16 +68,6 @@ pthread_t thread_ready;
 pthread_t thread_exec;
 pthread_t thread_blocked;
 
-
-// Planificador Mediano Plazo
-t_queue *cola_suspended_blocked;
-t_queue *cola_suspended_ready;
-//sem_t sem_suspended_blocked;
-sem_t sem_suspended_ready;
-pthread_mutex_t mutex_suspended_blocked;
-pthread_mutex_t mutex_suspended_ready;
-pthread_t thread_suspended_ready;
-
 pthread_t console_thread;
 
 #endif /* KERNEL_GLOBAL_H_ */

@@ -7,6 +7,13 @@
 #include <commons/collections/list.h>
 #include <estructuras.h>
 #include "kernel_conexiones.h"
+#include "syscall.h"
+
+extern int plani_running;
+
+extern t_queue* cola_blocked_sleep;
+
+extern pthread_mutex_t mutex_cola_sleep;
 
 extern t_list* lista_ready;
 

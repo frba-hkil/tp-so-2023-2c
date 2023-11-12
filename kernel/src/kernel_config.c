@@ -5,8 +5,6 @@ t_kernel_config *kernel_leer_configuracion(char *path) {
 	t_config *config = config_create(path);
 	t_kernel_config *kernel_config = malloc(sizeof(t_kernel_config));
 
-	kernel_config->ip_kernel = string_duplicate(config_get_string_value(config, "IP_KERNEL"));
-	kernel_config->puerto_escucha = string_duplicate(config_get_string_value(config, "PUERTO_ESCUCHA"));
 	kernel_config->ip_memoria = string_duplicate(config_get_string_value(config, "IP_MEMORIA"));
 	kernel_config->puerto_memoria = string_duplicate(config_get_string_value(config, "PUERTO_MEMORIA"));
 	kernel_config->ip_filesystem = string_duplicate(config_get_string_value(config, "IP_FILESYSTEM"));

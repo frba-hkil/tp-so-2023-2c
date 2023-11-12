@@ -14,7 +14,7 @@
 t_kernel_config *kernel_config;
 void (*command_handlers[6])(char**);
 
-int plani_running;
+//int plani_running;
 Comando codigo_consola;
 char** parametros_consola;
 
@@ -28,6 +28,7 @@ sem_t sem_new;
 uint32_t generador_de_id;
 
 t_queue *cola_new;
+t_queue *cola_exit;
 
 char *op_strings[16];
 

@@ -8,7 +8,6 @@
 #include <commons/string.h>
 
 typedef enum {
-	NO_OP,
 	SET,
 	SUM,
 	SUB,
