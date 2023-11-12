@@ -118,7 +118,8 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
             }
         } else if (instruccion->identificador == SLEEP) {
             //SLEEP (Tiempo): Esta instrucción representa una syscall bloqueante. Se deberá devolver el Contexto de Ejecución actualizado al Kernel junto a la cantidad de segundos que va a bloquearse el proceso.
-            devolver = true;
+            protocolo = DESALOJO_POR_SYSCALL;
+        	devolver = true;
         } else if (instruccion->identificador == WAIT) {
             //WAIT (Recurso): Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro
             devolver = true;
