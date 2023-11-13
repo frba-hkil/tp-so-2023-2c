@@ -1,8 +1,5 @@
 #include "kernel_operaciones.h"
 
-char *op_strings[] = {"SET", "SUM", "SUB", "JNZ", "SLEEP", "WAIT", "SIGNAL", "MOV_IN", "MOV_OUT", "F_OPEN", "F_CLOSE", "F_SEEK", "F_READ", "F_WRITE", "F_TRUNCATE", "EXIT"};
-
-
 void escuchar_consola(void) {
 
 	generador_de_id = 0;
@@ -82,41 +79,6 @@ void detener_planificacion(char** parametros) {
 void cambiar_multiprogramacion(char** parametros) {
 	sem_destroy(&sem_grado_multiprogramacion);
 	sem_init(&sem_grado_multiprogramacion, 0, atoi(parametros[0]));
-}
-
-
-t_list *crear_instrucciones(FILE* proc) {
-
-	char *op, *param1, *param2;
-	uint32_t op_code;
-	t_instruccion *inst;
-	t_list *instrucciones = list_create();
-
-	while(!feof(proc)) {
-		op = string_new();
-		param1 = string_new();
-		param2 = string_new();
-		fscanf(proc, "%s %s %s\n", op, param1, param2); //no verifica errores sintacticos/semanticos
-		op_code = string_a_op_code(op);
-		inst = crear_instruccion(op_code, param1, param2);
-		list_add(instrucciones, inst);
-		free(op);
-		free(param1);
-		free(param2);
-	}
-
-	return instrucciones;
-}
-
-t_op_code string_a_op_code(char* str) {
-	int op_codes_size = string_array_size(op_strings);
-	t_op_code i;
-
-	for(i = 0; i < op_codes_size; i++) {
-		if(string_equals_ignore_case(str, op_strings[i]))
-			return i;
-	}
-	return -1;
 }
 
 void cargar_instrucciones(char* fpath, uint32_t pid, uint32_t proc_size) {
