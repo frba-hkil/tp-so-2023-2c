@@ -12,9 +12,8 @@ void atender_cpu(t_pcb* pcb, t_protocolo protocolo) {
 }
 
 void atender_syscall(t_pcb* pcb) {
-	t_instruccion* inst = (t_instruccion *) list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
 
-	if(inst->identificador == SLEEP)
+	if(pcb->contexto->inst_desalojador->identificador == SLEEP)
 		bloquear_por_sleep(pcb);
 }
 
@@ -28,12 +27,12 @@ void bloquear_por_sleep(t_pcb *pcb) {
 
 void bloquearse_por(void* pcb) {
 	t_pcb *_pcb = (t_pcb*) pcb;
-	t_instruccion inst = *(t_instruccion *) list_get(_pcb->contexto->instrucciones, _pcb->contexto->program_counter);
-	int segundos = atoi(inst.primer_operando);
 
+	int segundos = atoi(_pcb->contexto->inst_desalojador->primer_operando);
 	_pcb->estado = BLOCKED;
 	sleep(segundos);
 	log_info(kernel_logger, "PID %d durmio---", _pcb->contexto->pid);
+
 	if(!plani_running) {
 		pthread_mutex_lock(&mutex_cola_sleep);
 		queue_push(cola_blocked_sleep, pcb);
@@ -58,3 +57,4 @@ void bloquearse_por(void* pcb) {
 
 
 }
+
