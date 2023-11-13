@@ -64,12 +64,6 @@ void plani_corto_pl(char* algoritmo) {
 			//pthread_mutex_lock(&mutex_lista_ready);
 
 			planificador(lista_ready);
-			//pthread_mutex_unlock(&mutex_lista_ready);
-			//log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb_a_ejecutar->contexto->pid);
-			//sem_post(&sem_grado_multiprogramacion);
-			//mandar a cpu y esperar respuesta(contexto)
-			//actualizar pcb. si devolvio contexto por EXIT agregar a cola de exit
-			//sem_post(&sem_exit); si es por EXIT
 		}
 
 		else {
@@ -145,18 +139,10 @@ void fifo(t_list* procesos_en_ready) {
 	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
 
 	deserializar_contexto_ejecucion(pcb->contexto, paquete);
-	//print_pcb(kernel_logger, pcb);
 
-	t_instruccion inst = *(t_instruccion*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
-	int op_code = inst.identificador;
-	log_debug(kernel_logger, "contexto devuelto con op code: %d", op_code);
-
-	if(op_code != EXIT) {
+	if(pcb->contexto->inst_desalojador->identificador != EXIT) {
 		atender_cpu(pcb, paquete->codigo_operacion);
-		//pthread_mutex_lock(&mutex_lista_ready);
-		//list_add(procesos_en_ready, pcb);
-		//pthread_mutex_unlock(&mutex_lista_ready);
-		//sem_post(&sem_lista_ready);
+
 	}
 	else {
 		pthread_mutex_lock(&mutex_exit);

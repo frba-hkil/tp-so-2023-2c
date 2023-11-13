@@ -48,4 +48,6 @@ t_list *crear_instrucciones(FILE* proc);
 
 t_op_code string_a_op_code(char* str);
 
+void cargar_instrucciones(char* fpath, uint32_t pid, uint32_t proc_size);
+
 #endif /* SRC_KERNEL_OPERACIONES_H_ */

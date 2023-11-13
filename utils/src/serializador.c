@@ -4,11 +4,15 @@ t_paquete *serializar_instrucciones(t_list *instrucciones, t_protocolo protocolo
 t_list *deserializar_instrucciones(t_list *datos, uint32_t longitud_datos);
 
 t_paquete *serializar_contexto_ejecucion(t_contexto_ejecucion *ce, t_protocolo protocolo) {
-    t_paquete *paquete = serializar_instrucciones(ce->instrucciones, protocolo);
+    t_paquete *paquete = crear_paquete(protocolo, buffer_vacio());
 
     agregar_a_paquete(paquete, &(ce->pid), sizeof(uint32_t));
     agregar_a_paquete(paquete, ce->registros, sizeof(t_registro));  // Assuming t_registro is a fixed size
     agregar_a_paquete(paquete, &(ce->program_counter), sizeof(uint32_t));
+
+    agregar_a_paquete(paquete, &(ce->inst_desalojador->identificador), sizeof(t_op_code));
+    agregar_a_paquete(paquete, ce->inst_desalojador->primer_operando, strlen(ce->inst_desalojador->primer_operando)+1);
+    agregar_a_paquete(paquete, ce->inst_desalojador->segundo_operando, strlen(ce->inst_desalojador->segundo_operando)+1);
 
     return paquete;
 }
@@ -16,17 +20,21 @@ t_paquete *serializar_contexto_ejecucion(t_contexto_ejecucion *ce, t_protocolo p
 void deserializar_contexto_ejecucion(t_contexto_ejecucion *contexto, t_paquete *paquete) {
     t_list *datos = deserealizar_paquete(paquete);
 
-    contexto->instrucciones = deserializar_instrucciones(datos, list_size(datos) - 3);
+    //contexto->instrucciones = deserializar_instrucciones(datos, list_size(datos) - 3);
 
-    uint32_t offset = list_size(contexto->instrucciones) * 3;
-    contexto->pid = *(uint32_t *)list_get(datos, offset + 0);
+    //uint32_t offset = list_size(contexto->instrucciones) * 3;
+    contexto->pid = *(uint32_t *)list_get(datos, 0);
     contexto->registros = malloc(sizeof(t_registro));
-    memcpy(contexto->registros, list_get(datos, offset + 1), sizeof(t_registro));
-    contexto->program_counter = *(uint32_t *)list_get(datos, offset + 2);
+    memcpy(contexto->registros, list_get(datos, 1), sizeof(t_registro));
+    contexto->program_counter = *(uint32_t *)list_get(datos, 2);
+    contexto->inst_desalojador = malloc(sizeof(t_instruccion));
+    contexto->inst_desalojador->identificador = *(t_op_code*)list_get(datos, 3);
+    contexto->inst_desalojador->primer_operando = string_duplicate((char*) list_get(datos, 4));
+    contexto->inst_desalojador->segundo_operando = string_duplicate((char*) list_get(datos, 5));
 
     list_destroy_and_destroy_elements(datos, free);
 }
-
+/*
 t_paquete *serializar_pcb(t_pcb *pcb, t_protocolo protocolo) {
     t_paquete *paquete = serializar_contexto_ejecucion(pcb->contexto, protocolo);
 
@@ -61,7 +69,7 @@ t_pcb *deserializar_pcb(t_paquete *paquete) {
     list_destroy_and_destroy_elements(datos, free);
     return pcb;
 }
-
+*/
 t_paquete *serializar_instrucciones(t_list *instrucciones, t_protocolo protocolo) {
 	t_paquete *paquete = crear_paquete(protocolo, buffer_vacio());
 
