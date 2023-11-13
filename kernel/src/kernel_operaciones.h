@@ -30,8 +30,6 @@ uint32_t generador_de_id;
 t_queue *cola_new;
 t_queue *cola_exit;
 
-char *op_strings[16];
-
 void escuchar_consola(void);
 
 void iniciar_proceso(char** parametros);
@@ -43,10 +41,6 @@ void iniciar_planificacion(char** parametros);
 void detener_planificacion(char** parametros);
 
 void cambiar_multiprogramacion(char** parametros);
-
-t_list *crear_instrucciones(FILE* proc);
-
-t_op_code string_a_op_code(char* str);
 
 void cargar_instrucciones(char* fpath, uint32_t pid, uint32_t proc_size);
 
