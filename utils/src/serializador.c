@@ -70,6 +70,28 @@ t_pcb *deserializar_pcb(t_paquete *paquete) {
     return pcb;
 }
 */
+t_paquete *serializar_instruccion(t_instruccion *instruccion, t_protocolo protocolo) {
+    t_paquete *paquete = crear_paquete(protocolo, buffer_vacio());
+    agregar_a_paquete(paquete, &(instruccion->identificador), sizeof(t_op_code));
+    agregar_a_paquete(paquete, instruccion->primer_operando, strlen(instruccion->primer_operando)+1);
+    agregar_a_paquete(paquete, instruccion->segundo_operando, strlen(instruccion->segundo_operando)+1);
+
+    return paquete;
+}
+
+t_instruccion *deserializar_instruccion(t_paquete *paquete) {
+    t_instruccion *instruccion = malloc(sizeof(t_instruccion));
+    t_list *datos = deserealizar_paquete(paquete);
+
+    instruccion->identificador = *(t_op_code *)list_get(datos, 0);
+    instruccion->primer_operando = string_duplicate((char *)list_get(datos, 1));
+    instruccion->segundo_operando = string_duplicate((char *)list_get(datos, 2));
+
+    list_destroy_and_destroy_elements(datos, free);
+
+    return instruccion;
+}
+
 t_paquete *serializar_instrucciones(t_list *instrucciones, t_protocolo protocolo) {
 	t_paquete *paquete = crear_paquete(protocolo, buffer_vacio());
 
