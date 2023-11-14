@@ -20,6 +20,10 @@ typedef enum {
 	DESALOJO_POR_IRQ,				// Protocolo que envia CPU a Kernel para indicar que el proceso fue desalojado por interrupccion
 	DESALOJO_POR_SYSCALL,			// Protocolo que envia CPU a Kernel para indicar que el proceso fue desalojado para realizar una syscall
 
+	SOLICITAR_INSTRUCCION,  		// Protocolo que envia CPU a Memoria para solicitar la siguiente instruccion a ejecutar
+	INSTRUCCION,  					// Protocolo que envia Memoria a CPU la siguiente instruccion a ejecutar
+	NO_INSTRUCCION,					// Protocolo que envia Memoria a CPU para indicar que no hay mas instrucciones
+
 	HANDSHAKE_INICIAL,				// Protocolo que envia CPU a Memoria e indica el envio de la configuracion para traducir direcciones logicas a fisicas
 	ACCESO_TABLA_PRIMER_NIVEL,		// Protocolo que envia CPU/MMU a Memoria para pedir la direccion de la tabla de segundo nivel
 	ACCESO_TABLA_SEGUNDO_NIVEL,		// Protocolo que envia CPU/MMU a Memoria para pedir el marco de la pagina en la tabla de segundo nivel
