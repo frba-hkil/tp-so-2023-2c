@@ -18,7 +18,7 @@ void plani_largo_pl(void) {
 
 			if(!hilos_creados) {
 				pthread_create(&thread_admitir, NULL, (void*) admitir_procesos, NULL);
-				//pthread_create(&thread_finalizar, NULL, (void*) finalizar_procesos, NULL);
+				pthread_create(&thread_finalizar, NULL, (void*) finalizar_procesos, NULL);
 				hilos_creados = 1;
 			}
 			//pthread_mutex_unlock(&mutex_plani_running);
@@ -36,6 +36,8 @@ void plani_largo_pl(void) {
 
 void plani_corto_pl(char* algoritmo) {
 	void (*planificador)(t_list*);
+	cola_blocked_sleep = queue_create();
+	pthread_t thread_atender_blocked;
 
 	if(string_equals_ignore_case(algoritmo, "prioridades"))
 		planificador = &prioridades;
@@ -48,6 +50,7 @@ void plani_corto_pl(char* algoritmo) {
 		planificador = &fifo;
 	}
 
+	pthread_create(&thread_atender_blocked, NULL, (void*)atender_bloqueados , NULL);
 
 	while(1) {
 
@@ -59,13 +62,8 @@ void plani_corto_pl(char* algoritmo) {
 			sleep(1);
 			sem_wait(&sem_lista_ready); // si no hay mas procesos en ready se pausa
 			//pthread_mutex_lock(&mutex_lista_ready);
+
 			planificador(lista_ready);
-			//pthread_mutex_unlock(&mutex_lista_ready);
-			//log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb_a_ejecutar->contexto->pid);
-			//sem_post(&sem_grado_multiprogramacion);
-			//mandar a cpu y esperar respuesta(contexto)
-			//actualizar pcb. si devolvio contexto por EXIT agregar a cola de exit
-			//sem_post(&sem_exit); si es por EXIT
 		}
 
 		else {
@@ -107,12 +105,13 @@ void admitir_procesos(void) {
 
 
 void finalizar_procesos(void) {
+	t_pcb *pcb_exit;
 
 	while(1) {
 
 		sem_wait(&sem_exit);
 		pthread_mutex_lock(&mutex_exit);
-		t_pcb *pcb_exit = queue_pop(cola_exit);
+		pcb_exit = queue_pop(cola_exit);
 		pthread_mutex_unlock(&mutex_exit);
 
 		pcb_a_exit(pcb_exit);
@@ -129,30 +128,35 @@ void fifo(t_list* procesos_en_ready) {
 	pthread_mutex_unlock(&mutex_lista_ready);
 
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
+	pcb->estado = EXEC;
 
 	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, PCB);
 	enviar_paquete(paquete, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(paquete);
 	paquete = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
 
-	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
+	eliminar_contexto_ejecucion(pcb->contexto);
+	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
 
-	if(op_code != EXIT) {
-		pthread_mutex_lock(&mutex_lista_ready);
-		list_add(procesos_en_ready, pcb); //por ahora no pasa a estado bloqueado
-		pthread_mutex_unlock(&mutex_lista_ready);
+	deserializar_contexto_ejecucion(pcb->contexto, paquete);
+
+	if(pcb->contexto->inst_desalojador->identificador != EXIT) {
+		atender_cpu(pcb, paquete->codigo_operacion);
+
 	}
 	else {
 		pthread_mutex_lock(&mutex_exit);
 		queue_push(cola_exit, pcb);
 		pthread_mutex_unlock(&mutex_exit);
 		sem_post(&sem_exit);
-		//mandarlo a cola de exit. (signal a hilo de finalizar proceso de planificador largo)
-		//hacer un signal de grado de multiprogramacion
 	}
+
+	eliminar_paquete(paquete);
 }
 
+void atender_bloqueados(void) {
 
+}
 
 
 

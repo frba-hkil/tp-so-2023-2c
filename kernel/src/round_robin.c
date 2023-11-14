@@ -12,6 +12,8 @@ void round_robin(t_list* procesos_en_ready) {
 	pthread_mutex_unlock(&mutex_lista_ready);
 
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
+	pcb->estado = EXEC;
+
 	t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
 	enviar_paquete(packet, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(packet);
@@ -25,16 +27,15 @@ void round_robin(t_list* procesos_en_ready) {
 
 	deserializar_contexto_ejecucion(pcb->contexto, packet);
 
-	int op_code = *(int*)list_get(pcb->contexto->instrucciones, pcb->contexto->program_counter);
-
-	if(op_code != EXIT) {
-		pthread_mutex_lock(&mutex_lista_ready);
-		list_add(procesos_en_ready, pcb); //por ahora no pasa a estado bloqueado
-		pthread_mutex_unlock(&mutex_lista_ready);
+	if(pcb->contexto->inst_desalojador->identificador != EXIT) {
+		atender_cpu(pcb, packet->codigo_operacion);
 	}
+
 	else {
-		//mandarlo a cola de exit. (signal a hilo de finalizar proceso de planificador largo)
-		//hacer un signal de grado de multiprogramacion
+		pthread_mutex_lock(&mutex_exit);
+		queue_push(cola_exit, pcb);
+		pthread_mutex_unlock(&mutex_exit);
+		sem_post(&sem_exit);
 	}
 
 	eliminar_paquete(packet);
@@ -51,3 +52,4 @@ void contar_quantum(void) {
 	}
 
 }
+

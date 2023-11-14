@@ -9,7 +9,8 @@ int main(int argc, char* argv[]) {
 	}
 	kernel_config = kernel_leer_configuracion(argv[1]);
 
-    //iniciar_conexiones_kernel(sockets);
+
+    iniciar_conexiones_kernel(sockets);
 
     iniciar_consola();
     sleep(1);
@@ -17,8 +18,8 @@ int main(int argc, char* argv[]) {
 
 
     log_destroy(kernel_logger);
-    kernel_eliminar_configuracion(kernel_config);
-    //pthread_join(console_thread, NULL);
+    //kernel_eliminar_configuracion(kernel_config);
+
     return EXIT_SUCCESS;
 }
 

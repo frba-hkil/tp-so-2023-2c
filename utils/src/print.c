@@ -15,7 +15,7 @@ void print_pcb(t_log *logger, t_pcb *pcb) {
 	log_info(logger, "PID = %d", pcb->contexto->pid);
 	log_info(logger, "Estado = %d", pcb->estado);
 	log_info(logger, "Tamanio proceso = %d", pcb->tamanio_proceso);
-	log_info(logger, "Cantidad de instrucciones = %d", list_size(pcb->contexto->instrucciones));
+	//log_info(logger, "Cantidad de instrucciones = %d", list_size(pcb->contexto->instrucciones));
 	log_info(logger, "Program counter = %d", pcb->contexto->program_counter);
 	log_info(logger, "Prioridad = %d", pcb->prioridad);
 	//log_info(logger, "Tabla de paginas = %d", pcb->tabla_paginas);

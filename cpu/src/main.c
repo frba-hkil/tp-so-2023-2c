@@ -1,7 +1,7 @@
 #include "main.h"
 
 int main(int argc, char *argv[]) {
-    t_config *cfg = config_create("./cpu.config");
+    t_config *cfg = config_create("../cpu.config");
     if (cfg == NULL) {
         error_show("El archivo de configuracion no existe");
         return EXIT_FAILURE;
@@ -139,7 +139,8 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
             }
         } else if (instruccion->identificador == SLEEP) {
             //SLEEP (Tiempo): Esta instrucción representa una syscall bloqueante. Se deberá devolver el Contexto de Ejecución actualizado al Kernel junto a la cantidad de segundos que va a bloquearse el proceso.
-            devolver = true;
+            protocolo = DESALOJO_POR_SYSCALL;
+        	devolver = true;
         } else if (instruccion->identificador == WAIT) {
             //WAIT (Recurso): Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro
             devolver = true;
@@ -192,15 +193,16 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
         }
 
         if (devolver) {
+        	log_info(logger, "exit: PID %d", contexto->pid);
             t_paquete *cntx = serializar_contexto_ejecucion(contexto, protocolo);
             enviar_paquete(cntx, socket_kernel);
 
             break;
         }
 
-        contexto->program_counter++;
+        ++(contexto->program_counter);
         free(instruccion);
     }    
 
-    contexto->program_counter--;
+    //++(contexto->program_counter);
 }

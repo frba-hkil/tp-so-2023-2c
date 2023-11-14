@@ -8,7 +8,6 @@
 #include <commons/string.h>
 
 typedef enum {
-	NO_OP,
 	SET,
 	SUM,
 	SUB,
@@ -50,7 +49,7 @@ typedef struct {
 
 typedef struct {
 	uint32_t pid;
-	t_list *instrucciones;
+	t_instruccion *inst_desalojador; //instruccion que hizo desalojar si corresponde
 	uint32_t program_counter;
 	t_registro *registros;
 
@@ -78,7 +77,7 @@ typedef struct {
 t_instruccion *crear_instruccion(t_op_code identificador, char* primer_operando, char* segundo_operando);
 void eliminar_instrucciones(t_list *instrucciones);
 void eliminar_contexto_ejecucion(t_contexto_ejecucion* ce);
-t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, uint32_t program_counter, uint32_t prioridad);
+t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, uint32_t prioridad);
 void eliminar_pcb(t_pcb *pcb);
 t_traductor *crear_traductor_direcciones(int entradas_tabla, int tamanio_pagina);
 void eliminar_traductor_direcciones(t_traductor *traductor);

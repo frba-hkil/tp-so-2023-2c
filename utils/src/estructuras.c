@@ -14,22 +14,30 @@ void eliminar_instrucciones(t_list *instrucciones) {
 }
 
 void eliminar_contexto_ejecucion(t_contexto_ejecucion* ce) {
-	eliminar_instrucciones(ce->instrucciones);
+	free(ce->inst_desalojador->primer_operando);
+	free(ce->inst_desalojador->segundo_operando);
+	free(ce->inst_desalojador);
 	free(ce->registros);
 	free(ce);
 }
 
-t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, t_list *instrucciones, uint32_t program_counter, uint32_t prioridad) {
+t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, uint32_t prioridad) {
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
 	pcb->contexto->registros = malloc(sizeof(t_registro));
+	pcb->contexto->inst_desalojador = malloc(sizeof(t_instruccion));
 
 	pcb->contexto->pid = id;
+	pcb->contexto->inst_desalojador = crear_instruccion(EXIT, "\0","\0");
 	pcb->tamanio_proceso = tamanio_proceso;
-	pcb->contexto->instrucciones = list_duplicate(instrucciones);//list_duplicate(instrucciones);
-	pcb->contexto->program_counter = program_counter;
+	pcb->contexto->program_counter = 0;
 	pcb->prioridad = prioridad;
 	pcb->estado = NEW;
+	pcb->contexto->registros->AX = 0;
+	pcb->contexto->registros->BX = 0;
+	pcb->contexto->registros->CX = 0;
+	pcb->contexto->registros->DX = 0;
+
 
 	return pcb;
 }

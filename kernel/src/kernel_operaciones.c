@@ -1,10 +1,5 @@
 #include "kernel_operaciones.h"
 
-char *op_strings[] = {"NO_OP", "SET", "SUM", "SUB", "JNZ", "SLEEP", "WAIT", "SIGNAL",
-                                "MOV_IN", "MOV_OUT", "F_OPEN", "F_CLOSE", "F_SEEK", "F_WRITE",
-                                "F_TRUNCATE", "EXIT"};
-
-
 void escuchar_consola(void) {
 
 	generador_de_id = 0;
@@ -14,13 +9,14 @@ void escuchar_consola(void) {
 	command_handlers[3] = iniciar_planificacion;
 	command_handlers[4] = cambiar_multiprogramacion;
 	cola_new = queue_create();
+	cola_exit = queue_create();
 	pthread_mutex_init(&mutex_new, NULL);
 	pthread_mutex_init(&mutex_plani_running, NULL);
 	sem_init(&sem_planificacion_l, 0, 0);
 	sem_init(&sem_planificacion_c, 0, 0);
 	sem_init(&sem_grado_multiprogramacion, 0, kernel_config->grado_multiprogramacion);
 	sem_init(&sem_new, 0, 0);
-	//sem_init(&sem_exit, 0, 0);
+	sem_init(&sem_exit, 0, 0);
 
 	//sleep(1);
 	pthread_create(&plani_largo_thread, NULL, (void*) plani_largo_pl, NULL);
@@ -37,24 +33,17 @@ void escuchar_consola(void) {
 }
 
 void iniciar_proceso(char** parametros) {
-	FILE* proceso = fopen(parametros[0], "r");
 	t_pcb* new_pcb;
-	if(!proceso){
-		log_error(kernel_logger, "ruta invalida / no existe (%s).\n", parametros[0]);
-	}
-	else{
-		//nadie mas que el hilo donde crea procesos escribe sobre el pid, no hay por que usar un mutex
-		new_pcb = crear_pcb(generador_de_id++, atoi(parametros[1]), crear_instrucciones(proceso), 0, atoi(parametros[2]));
-		//print_pcb(kernel_logger, new_pcb);
-		//print_instrucciones(kernel_logger, new_pcb->contexto->instrucciones);
-		pthread_mutex_lock(&mutex_new);
-		queue_push(cola_new, new_pcb);
-		pthread_mutex_unlock(&mutex_new);
-		sem_post(&sem_new);
-		log_info(kernel_logger, "Se crea el proceso <%d> en NEW", new_pcb->contexto->pid);
-	}
-	fclose(proceso);
-	//eliminar_pcb(new_pcb);
+
+	cargar_instrucciones(parametros[0], generador_de_id, atoi(parametros[1]));
+	new_pcb = crear_pcb(generador_de_id++, atoi(parametros[1]), atoi(parametros[2]));
+
+	pthread_mutex_lock(&mutex_new);
+	queue_push(cola_new, new_pcb);
+	pthread_mutex_unlock(&mutex_new);
+	sem_post(&sem_new);
+	log_info(kernel_logger, "Se crea el proceso <%d> en NEW", new_pcb->contexto->pid);
+
 }
 
 void finalizar_proceso(char** parametros) {
@@ -92,38 +81,13 @@ void cambiar_multiprogramacion(char** parametros) {
 	sem_init(&sem_grado_multiprogramacion, 0, atoi(parametros[0]));
 }
 
+void cargar_instrucciones(char* fpath, uint32_t pid, uint32_t proc_size) {
+	t_paquete* packet = crear_paquete(INICIALIZACION_DE_PROCESO, buffer_vacio());
 
-t_list *crear_instrucciones(FILE* proc) {
+	agregar_a_paquete(packet, &pid, sizeof(uint32_t));
+	agregar_a_paquete(packet, &proc_size, sizeof(uint32_t));
+	agregar_a_paquete(packet, fpath, strlen(fpath) + 1);
 
-	char *op, *param1, *param2;
-	uint32_t op_code;
-	t_instruccion *inst;
-	t_list *instrucciones = list_create();
-
-	while(!feof(proc)) {
-		op = string_new();
-		param1 = string_new();
-		param2 = string_new();
-		fscanf(proc, "%s %s %s\n", op, param1, param2); //no verifica errores sintacticos/semanticos
-		op_code = string_a_op_code(op);
-		inst = crear_instruccion(op_code, param1, param2);
-		list_add(instrucciones, inst);
-		free(op);
-		free(param1);
-		free(param2);
-	}
-
-	return instrucciones;
-}
-
-t_op_code string_a_op_code(char* str) {
-	int op_codes_size = string_array_size(op_strings);
-	t_op_code i;
-
-	for(i = 0; i < op_codes_size; i++) {
-		if(string_equals_ignore_case(str, op_strings[i]))
-			return i;
-	}
-	return -1;
+	enviar_paquete(packet, sockets[SOCK_MEM]);
 }
 

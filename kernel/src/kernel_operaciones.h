@@ -14,7 +14,7 @@
 t_kernel_config *kernel_config;
 void (*command_handlers[6])(char**);
 
-int plani_running;
+//int plani_running;
 Comando codigo_consola;
 char** parametros_consola;
 
@@ -28,8 +28,7 @@ sem_t sem_new;
 uint32_t generador_de_id;
 
 t_queue *cola_new;
-
-char *op_strings[16];
+t_queue *cola_exit;
 
 void escuchar_consola(void);
 
@@ -43,8 +42,6 @@ void detener_planificacion(char** parametros);
 
 void cambiar_multiprogramacion(char** parametros);
 
-t_list *crear_instrucciones(FILE* proc);
-
-t_op_code string_a_op_code(char* str);
+void cargar_instrucciones(char* fpath, uint32_t pid, uint32_t proc_size);
 
 #endif /* SRC_KERNEL_OPERACIONES_H_ */
