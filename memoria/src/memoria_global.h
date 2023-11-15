@@ -17,7 +17,7 @@ void *memoria_principal;
 t_list *tablas_de_paginacion;
 t_list *bitmap_marcos;
 t_list *archivos_swap;
-t_list *punteros_clock;
+t_dictionary *instrucciones_de_procesos;
 pthread_mutex_t mutex_swap;
 pthread_mutex_t mutex_memoria;
 uint32_t cantidad_acceso_disco;
