@@ -1,26 +1,40 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <commons/string.h>
-#include <commons/log.h>
-#include "configuraciones.h"
-#include "../../utils/src/conexiones.h"
+#include "main.h"
 
-t_log* LOGGER;
-t_memoria_config* MEMORIA_CONFIG;
 
-int main() {
-
-    LOGGER=iniciarLogger();
-    MEMORIA_CONFIG = iniciarConfig();
-
-    printf("El IP es: %s El puerto es: %s", MEMORIA_CONFIG->IP_FILESYSTEM, MEMORIA_CONFIG->PUERTO_ESCUCHA);
-
-    iniciar_modulo_servidor(MEMORIA_CONFIG->IP_MEMORIA, MEMORIA_CONFIG->PUERTO_ESCUCHA, LOGGER);
-
-    log_info (LOGGER, "Iniciamos server");
-
-    conectar_a_modulo(MEMORIA_CONFIG->IP_FILESYSTEM, MEMORIA_CONFIG->PUERTO_FILESYSTEM, LOGGER);
-
-    log_info(LOGGER, "Logramos ser cliente");
-    return 0;
+void init(char *config_path) {
+	//memoria_logger = log_create("memoria.log", "MEMORIA", true, LOG_LEVEL_INFO);
+	memoria_config = iniciar_config(config_path);
+	iniciar_memoria_principal(memoria_config->TAM_MEMORIA, memoria_config->TAM_PAGINA);
+	tablas_de_paginacion = list_create();
+	archivos_swap = list_create();
+	punteros_clock = list_create();
+	pthread_mutex_init(&mutex_swap, NULL);
+	pthread_mutex_init(&mutex_memoria, NULL);
+	cantidad_acceso_disco = 0;
+	cantidad_page_fault = 0;
 }
+
+int main(int argc, char **argv) {
+	memoria_logger = log_create("memoria.log", "MEMORIA", true, LOG_LEVEL_INFO);
+	if(argc < 2) {
+		log_error(memoria_logger, "Error de parametros. Ejemplo de uso: ./memoria <archivo_configuracion>");
+		log_destroy(memoria_logger);
+		return EXIT_FAILURE;
+	}
+	init(argv[1]);
+
+	int socket_memoria = iniciar_modulo_servidor(memoria_config->ip_memoria, memoria_config->puerto_escucha, memoria_logger);
+	log_info(memoria_logger, "Memoria iniciado como servidor");
+
+	if(atender_clientes(socket_memoria, procesar_conexiones) == WAIT_CLIENT_ERROR) {
+		log_error(memoria_logger, "Error al escuchar clientes... Finalizando servidor");
+	}
+
+	log_destroy(memoria_logger);
+	free(memoria_principal);
+	memoria_eliminar_configuracion(memoria_config);
+	cerrar_conexion(socket_memoria);
+
+	return EXIT_SUCCESS;
+}
+

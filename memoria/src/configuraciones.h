@@ -22,6 +22,6 @@ typedef struct
 
 extern t_log* LOGGER;
 t_log* iniciarLogger();
-t_memoria_config* iniciarConfig();
+t_memoria_config* iniciar_config(char *path);
 
 #endif
