@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <commons/config.h>
 #include <commons/string.h>
+#include <stdint.h>
 
 typedef struct {
 	char *ip_kernel;
@@ -16,7 +17,7 @@ typedef struct {
 	char *puerto_cpu_dispatch;
 	char *puerto_cpu_interrupt;
 	char *algoritmo_planificacion;
-	double quantum;
+	uint32_t quantum;
 	char* recursos;
 	char* instancias_recursos;
 	int grado_multiprogramacion;
