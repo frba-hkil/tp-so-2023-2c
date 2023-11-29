@@ -7,7 +7,7 @@ void atender_cpu(t_pcb* pcb, t_protocolo protocolo) {
 		atender_syscall(pcb);
 		break;
 	default:
-		++(pcb->contexto->program_counter);
+		;
 	}
 }
 
@@ -47,7 +47,6 @@ void bloquearse_por(void* pcb) {
 		pthread_mutex_unlock(&mutex_cola_sleep);
 
 		_pcb->estado = READY;
-		++(_pcb->contexto->program_counter);
 
 		pthread_mutex_lock(&mutex_lista_ready);
 		list_add(lista_ready, _pcb);

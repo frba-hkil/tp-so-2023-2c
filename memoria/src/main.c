@@ -4,7 +4,7 @@
 void init(char *config_path) {
 	//memoria_logger = log_create("memoria.log", "MEMORIA", true, LOG_LEVEL_INFO);
 	memoria_config = iniciar_config(config_path);
-	iniciar_memoria_principal(memoria_config->TAM_MEMORIA, memoria_config->TAM_PAGINA);
+	//iniciar_memoria_principal(memoria_config->TAM_MEMORIA, memoria_config->TAM_PAGINA);
 	tablas_de_paginacion = list_create();
 	archivos_swap = list_create();
 	instrucciones_de_procesos = dictionary_create();
@@ -23,17 +23,15 @@ int main(int argc, char **argv) {
 	}
 	init(argv[1]);
 
-	int socket_memoria = iniciar_modulo_servidor(memoria_config->IP_MEMORIA, memoria_config->PUERTO_ESCUCHA, memoria_logger);
-	log_info(memoria_logger, "Memoria iniciado como servidor");
+	iniciar_conexiones(memoria_config, memoria_logger);
+	atender_kernel();
+	atender_cpu();
 
-	if(atender_clientes(socket_memoria, procesar_conexiones) == WAIT_CLIENT_ERROR) {
-		log_error(memoria_logger, "Error al escuchar clientes... Finalizando servidor");
-	}
-
+	pthread_join(thread_kernel, NULL);
+	pthread_join(thread_cpu, NULL);
 	log_destroy(memoria_logger);
 	free(memoria_principal);
-	memoria_eliminar_configuracion(memoria_config);
-	cerrar_conexion(socket_memoria);
+	memoria_eliminar_config(memoria_config);
 
 	return EXIT_SUCCESS;
 }

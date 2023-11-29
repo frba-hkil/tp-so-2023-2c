@@ -51,7 +51,7 @@ void plani_corto_pl(char* algoritmo) {
 	}
 
 	pthread_create(&thread_atender_blocked, NULL, (void*)atender_bloqueados , NULL);
-
+	pthread_detach(thread_atender_blocked);
 	while(1) {
 
 		pthread_mutex_lock(&mutex_plani_running);
@@ -130,7 +130,7 @@ void fifo(t_list* procesos_en_ready) {
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
 	pcb->estado = EXEC;
 
-	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, PCB);
+	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
 	enviar_paquete(paquete, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(paquete);
 	paquete = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
