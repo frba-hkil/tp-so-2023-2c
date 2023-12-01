@@ -13,3 +13,11 @@ pthread_cond_t cond_ready_agregado;
 t_queue* cola_blocked_sleep;
 
 pthread_mutex_t mutex_cola_sleep = PTHREAD_MUTEX_INITIALIZER;
+
+t_dictionary *recursos_sistema;
+
+bool bloqueado;
+
+t_dictionary *colas_blocked;
+
+pthread_mutex_t mutex_cola_blocked = PTHREAD_MUTEX_INITIALIZER;
