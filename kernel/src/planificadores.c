@@ -129,7 +129,10 @@ void fifo(t_list* procesos_en_ready) {
 
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
 	pcb->estado = EXEC;
-
+	pthread_mutex_lock(&mutex_bloqueado);
+	bloqueado = false;
+	pthread_mutex_unlock(&mutex_bloqueado);
+	do {
 	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
 	enviar_paquete(paquete, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(paquete);
@@ -152,6 +155,7 @@ void fifo(t_list* procesos_en_ready) {
 	}
 
 	eliminar_paquete(paquete);
+	} while(!bloqueado && pcb->contexto->inst_desalojador->identificador != EXIT);
 }
 
 void atender_bloqueados(void) {

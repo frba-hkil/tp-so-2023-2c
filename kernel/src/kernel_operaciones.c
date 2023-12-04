@@ -17,7 +17,7 @@ void escuchar_consola(void) {
 	sem_init(&sem_grado_multiprogramacion, 0, kernel_config->grado_multiprogramacion);
 	sem_init(&sem_new, 0, 0);
 	sem_init(&sem_exit, 0, 0);
-	cargar_recursos();
+	//cargar_recursos();
 	//sleep(1);
 	pthread_create(&plani_largo_thread, NULL, (void*) plani_largo_pl, NULL);
 	pthread_create(&plani_corto_thread, NULL, (void*) plani_corto_pl, kernel_config->algoritmo_planificacion);
@@ -37,7 +37,7 @@ void iniciar_proceso(char** parametros) {
 
 	cargar_instrucciones(parametros[0], generador_de_id, atoi(parametros[1]));
 	new_pcb = crear_pcb(generador_de_id++, atoi(parametros[1]), atoi(parametros[2]));
-	init_recursos_pcb(new_pcb);
+	//init_recursos_pcb(new_pcb);
 
 	pthread_mutex_lock(&mutex_new);
 	queue_push(cola_new, new_pcb);

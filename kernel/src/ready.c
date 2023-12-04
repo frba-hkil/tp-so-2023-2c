@@ -20,4 +20,6 @@ bool bloqueado;
 
 t_dictionary *colas_blocked;
 
-pthread_mutex_t mutex_cola_blocked = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cola_bloqueado = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_mutex_t mutex_bloqueado = PTHREAD_MUTEX_INITIALIZER;

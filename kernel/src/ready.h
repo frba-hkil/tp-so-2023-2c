@@ -30,6 +30,8 @@ extern bool bloqueado;
 
 extern t_dictionary *colas_blocked;
 
-extern pthread_mutex_t mutex_cola_blocked;
+extern pthread_mutex_t mutex_cola_bloqueado;
+
+extern pthread_mutex_t mutex_bloqueado;
 
 #endif /* SRC_READY_H_ */
