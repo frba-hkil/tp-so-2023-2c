@@ -63,6 +63,7 @@ typedef struct {
 	uint32_t prioridad;
 	t_estado estado;
 	t_dictionary *recursos_asignados; //key: nombre recurso, elemento: cantidad de recurso
+	char *recurso_pendiente;// lista de t_recurso
 } t_pcb;
 
 typedef struct {
@@ -86,7 +87,7 @@ void eliminar_instrucciones(t_list *instrucciones);
 void eliminar_contexto_ejecucion(t_contexto_ejecucion* ce);
 t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, uint32_t prioridad);
 void eliminar_pcb(t_pcb *pcb);
-void eliminar_recurso_asignado(void* _recurso);
+void eliminar_recursos_pendientes(void* _recurso);
 t_traductor *crear_traductor_direcciones(int entradas_tabla, int tamanio_pagina);
 void eliminar_traductor_direcciones(t_traductor *traductor);
 t_tabla_acceso *crear_tabla_de_acceso(uint32_t direccion, uint32_t entrada);

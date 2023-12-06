@@ -17,7 +17,7 @@ void escuchar_consola(void) {
 	sem_init(&sem_grado_multiprogramacion, 0, kernel_config->grado_multiprogramacion);
 	sem_init(&sem_new, 0, 0);
 	sem_init(&sem_exit, 0, 0);
-	//cargar_recursos();
+	cargar_recursos();
 	//sleep(1);
 	pthread_create(&plani_largo_thread, NULL, (void*) plani_largo_pl, NULL);
 	pthread_create(&plani_corto_thread, NULL, (void*) plani_corto_pl, kernel_config->algoritmo_planificacion);
@@ -37,7 +37,6 @@ void iniciar_proceso(char** parametros) {
 
 	cargar_instrucciones(parametros[0], generador_de_id, atoi(parametros[1]));
 	new_pcb = crear_pcb(generador_de_id++, atoi(parametros[1]), atoi(parametros[2]));
-	//init_recursos_pcb(new_pcb);
 
 	pthread_mutex_lock(&mutex_new);
 	queue_push(cola_new, new_pcb);
@@ -96,15 +95,15 @@ void cargar_recursos(void) {
 	char** nombres_recursos = string_get_string_as_array(kernel_config->recursos);
 	char** instancias_recursos = string_get_string_as_array(kernel_config->instancias_recursos);
 	int i, cant_recursos = string_array_size(nombres_recursos);
-	uint32_t *instancia_recurso;
+	int32_t *instancia_recurso;
 
 	recursos_sistema = dictionary_create();
+	colas_blocked = dictionary_create();
 
 	for(i = 0 ; i < cant_recursos ; i++) {
-		instancia_recurso = malloc(sizeof(uint32_t));
+		instancia_recurso = malloc(sizeof(int32_t));
 		*instancia_recurso = atoi(instancias_recursos[i]);
 		dictionary_put(recursos_sistema, nombres_recursos[i], instancia_recurso);
-		colas_blocked = dictionary_create();
 
 		t_queue *cola_blocked = queue_create();
 		dictionary_put(colas_blocked, nombres_recursos[i], cola_blocked);
@@ -112,15 +111,3 @@ void cargar_recursos(void) {
 	}
 }
 
-void init_recursos_pcb(t_pcb *pcb) {
-	int i, cant_recursos;
-	t_list *keys = dictionary_keys(recursos_sistema);
-	cant_recursos = list_size(keys);
-
-	for(i = 0; i < cant_recursos; i++) {
-		char *key = (char*)list_get(keys, i);
-		dictionary_put(pcb->recursos_asignados, key, 0);
-	}
-
-	list_destroy(keys);
-}

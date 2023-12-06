@@ -69,13 +69,32 @@ void bloquearse_por(void* pcb) { // bloquearse por un tiempo determinado.
 void wait(t_pcb* pcb) { //optamos por no crear un hilo aparte para controlar procesos bloqueados en este tp, ya que es un sistema monoprocesador
 						//las funciones wait y signal controlaran las transiciones de exec->blocked y blocked->ready
 
-	uint32_t *cantidad_recurso;
+	int32_t *cantidad_recurso;
+
+	pthread_mutex_lock(&mutex_recursos_s);
+	string_trim_right(&pcb->contexto->inst_desalojador->primer_operando);
 
 	if(dictionary_has_key(recursos_sistema, pcb->contexto->inst_desalojador->primer_operando)) {
-		cantidad_recurso = (uint32_t*)dictionary_get(recursos_sistema, pcb->contexto->inst_desalojador->primer_operando);
-		--(*cantidad_recurso);
+		cantidad_recurso = (int32_t*)dictionary_get(recursos_sistema, pcb->contexto->inst_desalojador->primer_operando);
+		if(*cantidad_recurso - 1 >= 0) {
+			--(*cantidad_recurso);
+			pthread_mutex_unlock(&mutex_recursos_s);
+			pthread_mutex_lock(&mutex_recursos_p);
 
-		if((*cantidad_recurso) < 0) {
+			if(!dictionary_has_key(pcb->recursos_asignados, pcb->contexto->inst_desalojador->primer_operando)) {
+				int32_t *instancia = malloc(sizeof(int32_t));
+				*instancia = 1;
+				dictionary_put(pcb->recursos_asignados, pcb->contexto->inst_desalojador->primer_operando, instancia);
+			}
+			else {
+				int32_t *instancia = dictionary_get(pcb->recursos_asignados, pcb->contexto->inst_desalojador->primer_operando);
+				++(*instancia);
+			}
+			pthread_mutex_unlock(&mutex_recursos_p);
+		}
+		else {
+			pcb->recurso_pendiente = string_duplicate(pcb->contexto->inst_desalojador->primer_operando);
+			pthread_mutex_unlock(&mutex_recursos_s);
 			pthread_mutex_lock(&mutex_bloqueado);
 			bloqueado = true;
 			pthread_mutex_unlock(&mutex_bloqueado);
@@ -86,16 +105,15 @@ void wait(t_pcb* pcb) { //optamos por no crear un hilo aparte para controlar pro
 			pthread_mutex_unlock(&mutex_cola_bloqueado);
 			log_info(kernel_logger, "PID: %d - EXEC A BLOCKED", pcb->contexto->pid);
 		}
-
-		else {
-			uint32_t *recurso_proceso = (uint32_t*)dictionary_get(pcb->recursos_asignados, pcb->contexto->inst_desalojador->primer_operando);
-			++(*recurso_proceso);
-		}
+		sem_post(&sem_check_deadlock);
+		//sem_wait(&retomar);
 	}
 	else {
+		pthread_mutex_unlock(&mutex_recursos_s);
 		pthread_mutex_lock(&mutex_exit);
 		queue_push(cola_exit, pcb);
 		pthread_mutex_unlock(&mutex_exit);
+		bloqueado = true;
 		sem_post(&sem_exit);
 	}
 
@@ -104,27 +122,36 @@ void wait(t_pcb* pcb) { //optamos por no crear un hilo aparte para controlar pro
 void signal(t_pcb* pcb) {
 
 	if(dictionary_has_key(recursos_sistema, pcb->contexto->inst_desalojador->primer_operando)) {
-		uint32_t *recurso_proceso = (uint32_t*)dictionary_get(pcb->recursos_asignados, pcb->contexto->inst_desalojador->primer_operando);
+		pthread_mutex_lock(&mutex_recursos_p);
 
-		if((*recurso_proceso) > 0) {
+		if(dictionary_has_key(pcb->recursos_asignados, pcb->contexto->inst_desalojador->primer_operando)) {
+			int32_t *recurso_proceso = (int32_t*)dictionary_get(pcb->recursos_asignados, pcb->contexto->inst_desalojador->primer_operando);
 			--(*recurso_proceso);
-			uint32_t *cantidad_recurso = (uint32_t*)dictionary_get(recursos_sistema, pcb->contexto->inst_desalojador->primer_operando);
-			++(*cantidad_recurso);
+			pthread_mutex_unlock(&mutex_recursos_p);
+			pthread_mutex_lock(&mutex_cola_bloqueado);
 			t_queue* cola_blocked = (t_queue*) dictionary_get(colas_blocked, pcb->contexto->inst_desalojador->primer_operando);
 			if(!queue_is_empty(cola_blocked)) {
 				t_pcb * unlocked_pcb = queue_pop(cola_blocked);
-
+				pthread_mutex_unlock(&mutex_cola_bloqueado);
 				unlocked_pcb->estado = READY;
 				pthread_mutex_lock(&mutex_lista_ready);
 				list_add(lista_ready, unlocked_pcb);
 				pthread_mutex_unlock(&mutex_lista_ready);
 				sem_post(&sem_lista_ready);
 			}
+			else {
+				pthread_mutex_unlock(&mutex_cola_bloqueado);
+				pthread_mutex_lock(&mutex_recursos_s);
+				int32_t *cantidad_recurso = (int32_t*)dictionary_get(recursos_sistema, pcb->contexto->inst_desalojador->primer_operando);
+				++(*cantidad_recurso);
+				pthread_mutex_unlock(&mutex_recursos_s);
+			}
 		}
 		else {
 			pthread_mutex_lock(&mutex_exit);
 			queue_push(cola_exit, pcb);
 			pthread_mutex_unlock(&mutex_exit);
+			bloqueado = true;
 			sem_post(&sem_exit);
 		}
 	}
@@ -132,7 +159,42 @@ void signal(t_pcb* pcb) {
 		pthread_mutex_lock(&mutex_exit);
 		queue_push(cola_exit, pcb);
 		pthread_mutex_unlock(&mutex_exit);
+		bloqueado = true;
 		sem_post(&sem_exit);
 	}
 }
 
+void liberar_recursos_asignados(t_pcb* pcb) {
+
+	dictionary_iterator(pcb->recursos_asignados, liberar_recurso);
+}
+
+void liberar_recurso(char* _key, void* n) {
+	int32_t *instancia = (int32_t*) n, *m;
+
+	t_queue* cola_blocked = (t_queue*) dictionary_get(colas_blocked, _key);
+	pthread_mutex_lock(&mutex_recursos_s);
+	m = (int32_t*)dictionary_get(recursos_sistema, _key);
+
+	int i;
+	for(i = 0; i < *instancia; i++){
+		if(!queue_is_empty(cola_blocked)) {
+			pthread_mutex_lock(&mutex_cola_bloqueado);
+			t_pcb * unlocked_pcb = queue_pop(cola_blocked);
+			unlocked_pcb->estado = READY;
+			pthread_mutex_unlock(&mutex_cola_bloqueado);
+			pthread_mutex_lock(&mutex_recursos_p);
+			int32_t *n_actual_proceso = (int32_t*) dictionary_get(unlocked_pcb->recursos_asignados, _key);
+			++(*n_actual_proceso);
+			pthread_mutex_unlock(&mutex_recursos_p);
+			pthread_mutex_lock(&mutex_lista_ready);
+			list_add(lista_ready, unlocked_pcb);
+			pthread_mutex_unlock(&mutex_lista_ready);
+			sem_post(&sem_lista_ready);
+		}
+		else
+			++(*m);
+	}
+	*instancia = 0;
+	pthread_mutex_unlock(&mutex_recursos_s);
+}

@@ -34,4 +34,12 @@ extern pthread_mutex_t mutex_cola_bloqueado;
 
 extern pthread_mutex_t mutex_bloqueado;
 
+extern pthread_mutex_t mutex_recursos_s;
+
+extern pthread_mutex_t mutex_recursos_p;
+
+extern sem_t sem_check_deadlock;
+
+extern sem_t retomar;
+
 #endif /* SRC_READY_H_ */

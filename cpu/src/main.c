@@ -163,10 +163,22 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
                 contexto->inst_desalojador->segundo_operando = string_duplicate("\0");
             } else if (instruccion->identificador == WAIT) {
                 //WAIT (Recurso): Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro
+            	protocolo = DESALOJO_POR_SYSCALL;
                 devolver = true;
+                contexto->inst_desalojador->identificador = instruccion->identificador;
+                free(contexto->inst_desalojador->primer_operando);
+                contexto->inst_desalojador->primer_operando = string_duplicate(instruccion->primer_operando);
+                free(contexto->inst_desalojador->segundo_operando);
+                contexto->inst_desalojador->segundo_operando = string_duplicate("\0");
             } else if (instruccion->identificador == SIGNAL) {
-                //SIGNAL (Recurso): Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro.
+                //SIGNAL (Recurso): Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro
+            	protocolo = DESALOJO_POR_SYSCALL;
                 devolver = true;
+                contexto->inst_desalojador->identificador = instruccion->identificador;
+                free(contexto->inst_desalojador->primer_operando);
+                contexto->inst_desalojador->primer_operando = string_duplicate(instruccion->primer_operando);
+                free(contexto->inst_desalojador->segundo_operando);
+                contexto->inst_desalojador->segundo_operando = string_duplicate("\0");
             } else if (instruccion->identificador == MOV_IN) {
                 //MOV_IN (Registro, Dirección Lógica): Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
                 log_info(logger, "PID: %d - Accion: LEER - Direccion Fisica: <DIRECCION_FISICA> - Valor: <VALOR_LEIDO>", contexto->pid);

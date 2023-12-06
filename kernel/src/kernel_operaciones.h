@@ -49,6 +49,4 @@ void cargar_instrucciones(char* fpath, uint32_t pid, uint32_t proc_size);
 
 void cargar_recursos(void);
 
-void init_recursos_pcb(t_pcb *pcb);
-
 #endif /* SRC_KERNEL_OPERACIONES_H_ */
