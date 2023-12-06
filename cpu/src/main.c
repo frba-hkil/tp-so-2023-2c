@@ -1,7 +1,7 @@
 #include "main.h"
 
 int main(int argc, char *argv[]) {
-    t_config *cfg = config_create("./cpu.config");
+    t_config *cfg = config_create("../cpu.config");
     if (cfg == NULL) {
         error_show("El archivo de configuracion no existe");
         return EXIT_FAILURE;
@@ -31,11 +31,12 @@ void iniciar_hilos_cpu() {
 }
 
 void hilo_dispatch() {
-    t_contexto_ejecucion *cntx = malloc(sizeof(t_contexto_ejecucion));
+    t_contexto_ejecucion *cntx;
 
     int socket_cliente = esperar_cliente(sockets.dispatch);
     log_info(logger, "Cliente dispatch conectado");
     while (1) {
+    	cntx = malloc(sizeof(t_contexto_ejecucion));
         t_paquete *pqt = recibir_paquete(socket_cliente);
 
         if (pqt->codigo_operacion == CONTEXTO_EJECUCION) {
@@ -45,7 +46,7 @@ void hilo_dispatch() {
             ejecutarInstrucciones(cntx, socket_cliente);
             log_debug(logger, "CNTX DUMP PC->%d, AX->%d, BX->%d, CX->%d, DX->%d", cntx->program_counter, cntx->registros->AX, cntx->registros->BX, cntx->registros->CX, cntx->registros->DX);
         }
-
+        eliminar_contexto_ejecucion(cntx);
         eliminar_paquete(pqt);
     }
 }
@@ -121,21 +122,23 @@ char *getInstruccionLabel(t_op_code iId){
 
 void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
     t_paquete *pqt;
+    bool devolver;
+    t_protocolo protocolo;
 
     while (true) {
         pqt = serializar_contexto_ejecucion(contexto, SOLICITAR_INSTRUCCION);
 
         enviar_paquete(pqt, sockets.memoria);
-
+        eliminar_paquete(pqt);
         do {
             pqt = recibir_paquete(sockets.memoria);
+            //log_info(logger, "recibi instruccion a ejecutar");
         } while (pqt->codigo_operacion != INSTRUCCION && pqt->codigo_operacion!=NO_INSTRUCCION);
 
-        bool devolver = false;
-        t_protocolo protocolo;
+        devolver = false;
 
         if (pqt->codigo_operacion == INSTRUCCION) {
-            ++(contexto->program_counter);
+            //++(contexto->program_counter);
             t_instruccion *instruccion = deserializar_instruccion(pqt);
             log_info(logger, "PID: %d - FETCH - Program Counter: %d", contexto->pid, contexto->program_counter);
 
@@ -153,12 +156,29 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
                 //SLEEP (Tiempo): Esta instrucción representa una syscall bloqueante. Se deberá devolver el Contexto de Ejecución actualizado al Kernel junto a la cantidad de segundos que va a bloquearse el proceso.
                 protocolo = DESALOJO_POR_SYSCALL;
                 devolver = true;
+                contexto->inst_desalojador->identificador = instruccion->identificador;
+                free(contexto->inst_desalojador->primer_operando);
+                contexto->inst_desalojador->primer_operando = string_duplicate(instruccion->primer_operando);
+                free(contexto->inst_desalojador->segundo_operando);
+                contexto->inst_desalojador->segundo_operando = string_duplicate("\0");
             } else if (instruccion->identificador == WAIT) {
                 //WAIT (Recurso): Esta instrucción solicita al Kernel que se asigne una instancia del recurso indicado por parámetro
+            	protocolo = DESALOJO_POR_SYSCALL;
                 devolver = true;
+                contexto->inst_desalojador->identificador = instruccion->identificador;
+                free(contexto->inst_desalojador->primer_operando);
+                contexto->inst_desalojador->primer_operando = string_duplicate(instruccion->primer_operando);
+                free(contexto->inst_desalojador->segundo_operando);
+                contexto->inst_desalojador->segundo_operando = string_duplicate("\0");
             } else if (instruccion->identificador == SIGNAL) {
-                //SIGNAL (Recurso): Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro.
+                //SIGNAL (Recurso): Esta instrucción solicita al Kernel que se libere una instancia del recurso indicado por parámetro
+            	protocolo = DESALOJO_POR_SYSCALL;
                 devolver = true;
+                contexto->inst_desalojador->identificador = instruccion->identificador;
+                free(contexto->inst_desalojador->primer_operando);
+                contexto->inst_desalojador->primer_operando = string_duplicate(instruccion->primer_operando);
+                free(contexto->inst_desalojador->segundo_operando);
+                contexto->inst_desalojador->segundo_operando = string_duplicate("\0");
             } else if (instruccion->identificador == MOV_IN) {
                 //MOV_IN (Registro, Dirección Lógica): Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
                 log_info(logger, "PID: %d - Accion: LEER - Direccion Fisica: <DIRECCION_FISICA> - Valor: <VALOR_LEIDO>", contexto->pid);
@@ -194,11 +214,18 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
                 //EXIT: Esta instrucción representa la syscall de finalización del proceso. Se deberá devolver el Contexto de Ejecución actualizado al Kernel para su finalización.
                 devolver = true;
                 protocolo = DESALOJO_POR_EXIT;
+                contexto->inst_desalojador->identificador = instruccion->identificador;
+                free(contexto->inst_desalojador->primer_operando);
+                contexto->inst_desalojador->primer_operando = string_duplicate("\0");
+                free(contexto->inst_desalojador->segundo_operando);
+                contexto->inst_desalojador->segundo_operando = string_duplicate("\0");
             }
 
-            log_info(logger, "PID: %d - Ejecutando: %s - %s %s", contexto->program_counter, getInstruccionLabel(instruccion->identificador), instruccion->primer_operando, instruccion->segundo_operando);
+            log_info(logger, "PID: %d - Ejecutando: %s - %s %s", contexto->pid, getInstruccionLabel(instruccion->identificador), instruccion->primer_operando, instruccion->segundo_operando);
             free(instruccion);
         }
+
+        contexto->program_counter++;
 
         if (desalojar) {
             devolver = true;
@@ -207,13 +234,13 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
         }
 
         if (devolver) {
-        	log_info(logger, "exit: PID %d", contexto->pid);
+        	//log_info(logger, "exit: PID %d", contexto->pid);
             t_paquete *cntx = serializar_contexto_ejecucion(contexto, protocolo);
             enviar_paquete(cntx, socket_kernel);
-
+            eliminar_paquete(cntx);
             break;
         }
 
-        
+        eliminar_paquete(pqt);
     }    
 }

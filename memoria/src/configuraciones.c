@@ -30,8 +30,16 @@ t_memoria_config* iniciar_config(char *path){
 
     config_destroy(config);
 
-    log_info(LOGGER,"Me traje todos datos de config");
-
     return memoria_config;
     
+}
+
+void memoria_eliminar_config(t_memoria_config *config) {
+	free(config->ALGORITMO_REEMPLAZO);
+	free(config->IP_FILESYSTEM);
+	free(config->IP_MEMORIA);
+	free(config->PATH_INSTRUCCIONES);
+	free(config->PUERTO_ESCUCHA);
+	free(config->PUERTO_FILESYSTEM);
+	free(config);
 }

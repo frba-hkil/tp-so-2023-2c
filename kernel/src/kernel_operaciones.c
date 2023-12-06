@@ -17,7 +17,7 @@ void escuchar_consola(void) {
 	sem_init(&sem_grado_multiprogramacion, 0, kernel_config->grado_multiprogramacion);
 	sem_init(&sem_new, 0, 0);
 	sem_init(&sem_exit, 0, 0);
-
+	cargar_recursos();
 	//sleep(1);
 	pthread_create(&plani_largo_thread, NULL, (void*) plani_largo_pl, NULL);
 	pthread_create(&plani_corto_thread, NULL, (void*) plani_corto_pl, kernel_config->algoritmo_planificacion);
@@ -89,5 +89,25 @@ void cargar_instrucciones(char* fpath, uint32_t pid, uint32_t proc_size) {
 	agregar_a_paquete(packet, fpath, strlen(fpath) + 1);
 
 	enviar_paquete(packet, sockets[SOCK_MEM]);
+}
+
+void cargar_recursos(void) {
+	char** nombres_recursos = string_get_string_as_array(kernel_config->recursos);
+	char** instancias_recursos = string_get_string_as_array(kernel_config->instancias_recursos);
+	int i, cant_recursos = string_array_size(nombres_recursos);
+	int32_t *instancia_recurso;
+
+	recursos_sistema = dictionary_create();
+	colas_blocked = dictionary_create();
+
+	for(i = 0 ; i < cant_recursos ; i++) {
+		instancia_recurso = malloc(sizeof(int32_t));
+		*instancia_recurso = atoi(instancias_recursos[i]);
+		dictionary_put(recursos_sistema, nombres_recursos[i], instancia_recurso);
+
+		t_queue *cola_blocked = queue_create();
+		dictionary_put(colas_blocked, nombres_recursos[i], cola_blocked);
+
+	}
 }
 

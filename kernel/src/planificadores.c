@@ -38,6 +38,8 @@ void plani_corto_pl(char* algoritmo) {
 	void (*planificador)(t_list*);
 	cola_blocked_sleep = queue_create();
 	pthread_t thread_atender_blocked;
+	sem_init(&sem_check_deadlock, 0, 0);
+	sem_init(&retomar, 0, 0);
 
 	if(string_equals_ignore_case(algoritmo, "prioridades"))
 		planificador = &prioridades;
@@ -50,8 +52,8 @@ void plani_corto_pl(char* algoritmo) {
 		planificador = &fifo;
 	}
 
-	pthread_create(&thread_atender_blocked, NULL, (void*)atender_bloqueados , NULL);
-
+	pthread_create(&thread_atender_blocked, NULL, (void*)atender_deadlock , NULL);
+	pthread_detach(thread_atender_blocked);
 	while(1) {
 
 		pthread_mutex_lock(&mutex_plani_running);
@@ -129,8 +131,11 @@ void fifo(t_list* procesos_en_ready) {
 
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
 	pcb->estado = EXEC;
-
-	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, PCB);
+	pthread_mutex_lock(&mutex_bloqueado);
+	bloqueado = false;
+	pthread_mutex_unlock(&mutex_bloqueado);
+	do {
+	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
 	enviar_paquete(paquete, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(paquete);
 	paquete = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
@@ -152,13 +157,81 @@ void fifo(t_list* procesos_en_ready) {
 	}
 
 	eliminar_paquete(paquete);
+	} while(!bloqueado && pcb->contexto->inst_desalojador->identificador != EXIT);
 }
 
-void atender_bloqueados(void) {
+void atender_deadlock(void) {
+	t_list *keys_colas = dictionary_keys(recursos_sistema);
+	int cant_recursos = dictionary_size(recursos_sistema), i = 0;
+	t_list *posibles_procesos;
 
+	while(1) {
+
+		sem_wait(&sem_check_deadlock);
+
+		posibles_procesos = list_create();
+		bool estado_seguro = true;
+		char* recurso_actual;
+
+		char* recurso_inicial = (char*)list_get(keys_colas, 0);
+		t_queue *cola_blocked_recurso = (t_queue*)dictionary_get(colas_blocked, recurso_inicial);
+		while(estado_seguro && i < cant_recursos) {
+
+			if(queue_is_empty(cola_blocked_recurso))
+				break;
+			else {
+				int j = 0;
+				t_pcb *pcb = (t_pcb*)queue_peek(cola_blocked_recurso);
+				while(j < cant_recursos) {
+					recurso_actual = list_get(keys_colas, j);
+					uint32_t *instancia_asignado = (uint32_t*)dictionary_get(pcb->recursos_asignados, recurso_actual);
+					if(instancia_asignado) {
+
+						if(string_equals_ignore_case(recurso_actual, recurso_inicial)) {
+							estado_seguro = false;
+						}
+						else
+							break;
+					}
+					j++;
+				}
+				list_add(posibles_procesos, pcb);
+			}
+			i++;
+			cola_blocked_recurso = (t_queue*)dictionary_get(colas_blocked, recurso_actual);
+		}
+
+		if(!estado_seguro) {
+			mostrar_procesos_involucrados_deadlock(posibles_procesos);
+		}
+
+		list_destroy(posibles_procesos);
+		i = 0;
+	}
+	//sem_post(&retomar);
 }
 
+void mostrar_procesos_involucrados_deadlock(t_list *procesos) {
+	int cant_procesos = list_size(procesos), i, cant_recursos, j;
+	t_pcb* proceso;
+	char* recursos_asignados;
+	t_list* keys;
 
+	for(i = 0; i < cant_procesos; i++) {
+		proceso = (t_pcb*)list_get(procesos, i);
+		cant_recursos = dictionary_size(proceso->recursos_asignados);
+		keys = dictionary_keys(proceso->recursos_asignados);
+
+		recursos_asignados = string_duplicate(list_get(keys, 0));
+
+		for(j = 1 ; j < cant_recursos; j++){
+			string_append_with_format(&recursos_asignados, " %s", (char*)list_get(keys, j));
+		}
+		log_info(kernel_logger, "Deadlock detectado: <%d> - Recursos en posesión <%s> - Recurso requerido: <%s>", proceso->contexto->pid, recursos_asignados, proceso->recurso_pendiente);
+		free(recursos_asignados);
+		list_destroy(keys);
+	}
+}
 
 
 

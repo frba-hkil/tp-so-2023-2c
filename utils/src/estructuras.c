@@ -37,14 +37,24 @@ t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, uint32_t prioridad) {
 	pcb->contexto->registros->BX = 0;
 	pcb->contexto->registros->CX = 0;
 	pcb->contexto->registros->DX = 0;
-
+	pcb->recursos_asignados = dictionary_create();
+	pcb->recurso_pendiente = string_new();
 
 	return pcb;
 }
 
 void eliminar_pcb(t_pcb *pcb) {
 	eliminar_contexto_ejecucion(pcb->contexto);
+	dictionary_destroy_and_destroy_elements(pcb->recursos_asignados, free);
+	free(pcb->recurso_pendiente);
 	free(pcb);
+}
+
+void eliminar_recursos_pendientes(void* _recurso) {
+	t_recurso *recurso = (t_recurso*) _recurso;
+
+	free(recurso->nombre);
+	free(recurso);
 }
 
 t_traductor *crear_traductor_direcciones(int entradas_tabla, int tamanio_pagina) {

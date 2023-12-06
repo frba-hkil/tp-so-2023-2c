@@ -3,6 +3,7 @@
 
 #include "memoria_global.h"
 #include "gestionar_conexiones.h"
+#include "memoria_conexiones.h"
 
 
 

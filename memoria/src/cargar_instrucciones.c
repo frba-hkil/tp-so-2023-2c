@@ -5,17 +5,21 @@ char *op_strings[] = {"SET", "SUM", "SUB", "JNZ", "SLEEP", "WAIT", "SIGNAL", "MO
 
 t_list *leer_instrucciones(char* nombre_archivo) { //crea la lista de instrucciones dado un puntero al archivo de un proceso
     FILE* archivo = leer_archivo(nombre_archivo);
-
+    log_info(memoria_logger, "%s", nombre_archivo);
 	char *linea, **tokens;
 	t_instruccion *inst;
 	t_list *instrucciones = list_create();
+	size_t len;
 
 	while(!feof(archivo)) {
 		linea = string_new();
 		tokens = string_array_new();
+		len = 0;
 
-		fscanf(archivo, "%s\n", linea);
+		getline(&linea, &len, archivo);
+		//log_info(memoria_logger, "%s", linea);
 		tokens = string_n_split(linea, 3, " ");
+
 
 		switch(string_array_size(tokens)) {
 		case 1:

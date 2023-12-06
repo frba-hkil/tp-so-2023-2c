@@ -17,4 +17,12 @@ void bloquear_por_sleep(t_pcb *pcb);
 
 void bloquearse_por(void* pcb);
 
+void wait(t_pcb* pcb);
+
+void signal(t_pcb* pcb);
+
+void liberar_recursos_asignados(t_pcb* pcb);
+
+void liberar_recurso(char* _key, void* n);
+
 #endif /* SRC_SYSCALL_H_ */

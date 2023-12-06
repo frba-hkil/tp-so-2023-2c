@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <estructuras.h>
 #include <print.h>
 #include <commons/collections/queue.h>
+#include <commons/collections/dictionary.h>
+#include <commons/string.h>
 #include "consola.h"
 #include "planificadores.h"
 #include "kernel_config.h"
@@ -43,5 +46,7 @@ void detener_planificacion(char** parametros);
 void cambiar_multiprogramacion(char** parametros);
 
 void cargar_instrucciones(char* fpath, uint32_t pid, uint32_t proc_size);
+
+void cargar_recursos(void);
 
 #endif /* SRC_KERNEL_OPERACIONES_H_ */

@@ -24,7 +24,7 @@ void prioridades(t_list* procesos_en_ready) {
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
 	pcb->estado = EXEC;
 
-	t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, PCB);
+	t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
 	enviar_paquete(packet, sockets[SOCK_CPU_DISPATCH]);
 	eliminar_paquete(packet);
 

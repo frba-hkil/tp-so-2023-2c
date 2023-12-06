@@ -41,6 +41,8 @@ void finalizar_procesos(void);
 
 void fifo(t_list*);
 
-void atender_bloqueados(void);
+void atender_deadlock(void);
+
+void mostrar_procesos_involucrados_deadlock(t_list *procesos);
 
 #endif /* SRC_PLANIFICADORES_H_ */

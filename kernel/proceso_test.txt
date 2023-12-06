@@ -1,3 +1,0 @@
-SET AX 2
-SLEEP 3 1
-EXIT 2 2
