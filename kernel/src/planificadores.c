@@ -82,7 +82,8 @@ void admitir_procesos(void) {
 	pthread_mutex_init(&mutex_lista_ready, NULL);
 
 	while(1) {
-
+		sem_wait(&sem_grado_multiprogramacion);
+		sem_wait(&sem_new);
 		//pthread_mutex_lock(&mutex_plani_running);
 		if (!plani_running) {
 			//pthread_mutex_unlock(&mutex_plani_running);
@@ -95,14 +96,18 @@ void admitir_procesos(void) {
 		else {
 			//pthread_mutex_unlock(&mutex_plani_running);
 		}
-		sem_wait(&sem_grado_multiprogramacion);
-		sem_wait(&sem_new);
+		//sem_wait(&sem_grado_multiprogramacion);
+		//sem_wait(&sem_new);
 		pthread_mutex_lock(&mutex_new);
-		t_pcb *pcb_ready = queue_pop(cola_new);
-		pthread_mutex_unlock(&mutex_new);
+		if(!queue_is_empty(cola_new)) {
+			t_pcb *pcb_ready = queue_pop(cola_new);
+			pthread_mutex_unlock(&mutex_new);
 
-		pcb_new_a_ready(pcb_ready);
-		pthread_cond_signal(&cond_ready_agregado);
+			pcb_new_a_ready(pcb_ready);
+			pthread_cond_signal(&cond_ready_agregado);
+		}
+		else
+			pthread_mutex_unlock(&mutex_new);
 	}
 }
 
@@ -133,16 +138,17 @@ void fin_proc(uint32_t _pid) {
 	if(!pcb) {
 		pcb = buscar_proceso_diccionario(colas_blocked, _pid);
 	}
-	if(proceso_en_exec == pcb) {
-		enviar_mensaje("finalizar", FIN_PROCESO, sockets[SOCK_CPU_INT]);
-	}
 	if(pcb) {
 		pthread_mutex_lock(&mutex_exit);
 		queue_push(cola_exit, pcb);
 		pthread_mutex_unlock(&mutex_exit);
+		sem_post(&sem_exit);
+		return;
 	}
-
-	else {
+	if(proceso_en_exec == pcb) {
+		enviar_mensaje("finalizar", DESALOJO_POR_EXIT, sockets[SOCK_CPU_INT]);
+	}
+	if(!pcb) {
 		log_info(kernel_logger, "FINALIZAR_PROCESO: no existe el proceso con PID <%d>", _pid);
 	}
 }
@@ -310,7 +316,7 @@ t_pcb* buscar_proceso_diccionario(t_dictionary *dict, int pid) {
 		t_queue *cola_block = (t_queue*)dictionary_get(dict, key);
 		proceso = buscar_proceso_cola(cola_block, pid);
 
-		if(!proceso) {
+		if(proceso) {
 			//list_clean_and_destroy_elements(keys, free);
 			return proceso;
 		}

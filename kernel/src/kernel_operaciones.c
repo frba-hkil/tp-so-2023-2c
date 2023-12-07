@@ -18,6 +18,7 @@ void escuchar_consola(void) {
 	sem_init(&sem_grado_multiprogramacion, 0, kernel_config->grado_multiprogramacion);
 	sem_init(&sem_new, 0, 0);
 	sem_init(&sem_exit, 0, 0);
+	sem_init(&sem_sleep, 0, 0);
 	cargar_recursos();
 	//sleep(1);
 	pthread_create(&plani_largo_thread, NULL, (void*) plani_largo_pl, NULL);
@@ -65,6 +66,7 @@ void iniciar_planificacion(char** parametros) {
 		sem_post(&sem_planificacion_l);
 		sem_post(&sem_planificacion_c);
 		pthread_cond_signal(&cond_plani_running);
+		//sem_post(&sem_sleep);
 	}
 
 }

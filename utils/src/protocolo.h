@@ -19,7 +19,7 @@ typedef enum {
 	DESALOJO_POR_EXIT,				// Protocolo que envia CPU a Kernel para indicar que el proceso fue desalojado por ejecutar EXIT
 	DESALOJO_POR_IRQ,				// Protocolo que envia CPU a Kernel para indicar que el proceso fue desalojado por interrupccion
 	DESALOJO_POR_SYSCALL,			// Protocolo que envia CPU a Kernel para indicar que el proceso fue desalojado para realizar una syscall
-	FIN_PROCESO,				// Protocolo que envia CPU a Kernel para indicar que el proceso fue finalizado por comando
+	//FIN_PROCESO,				// Protocolo que envia CPU a Kernel para indicar que el proceso fue finalizado por comando
 
 	SOLICITAR_INSTRUCCION,  		// Protocolo que envia CPU a Memoria para solicitar la siguiente instruccion a ejecutar
 	INSTRUCCION,  					// Protocolo que envia Memoria a CPU la siguiente instruccion a ejecutar

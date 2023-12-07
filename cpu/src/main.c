@@ -60,7 +60,7 @@ void hilo_interrupt() {
         if (pqt->codigo_operacion==DESALOJAR_PROCESO) {
             desalojar = true;
         }
-        else if (pqt->codigo_operacion == FIN_PROCESO)
+        else if (pqt->codigo_operacion == DESALOJO_POR_EXIT)
         	terminar = true;
 
         eliminar_paquete(pqt);

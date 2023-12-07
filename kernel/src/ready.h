@@ -24,6 +24,8 @@ extern pthread_mutex_t mutex_lista_ready;
 
 extern pthread_cond_t cond_ready_agregado;
 
+extern sem_t sem_sleep;
+
 extern t_dictionary *recursos_sistema;
 
 extern bool bloqueado;
