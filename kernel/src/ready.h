@@ -24,6 +24,8 @@ extern pthread_mutex_t mutex_lista_ready;
 
 extern pthread_cond_t cond_ready_agregado;
 
+extern sem_t sem_sleep;
+
 extern t_dictionary *recursos_sistema;
 
 extern bool bloqueado;
@@ -41,5 +43,9 @@ extern pthread_mutex_t mutex_recursos_p;
 extern sem_t sem_check_deadlock;
 
 extern sem_t retomar;
+
+extern t_pcb *proceso_en_exec;
+
+extern pthread_mutex_t mutex_proceso_en_exec;
 
 #endif /* SRC_READY_H_ */

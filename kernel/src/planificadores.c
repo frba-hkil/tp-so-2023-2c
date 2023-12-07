@@ -9,6 +9,7 @@ void plani_largo_pl(void) {
 	pthread_mutex_init(&mutex_lista_ready, NULL);
 	sem_init(&sem_lista_ready, 0, 0);
 	lista_ready = list_create();
+	proceso_en_exec = NULL;
 
 	while(1) {
 
@@ -81,7 +82,8 @@ void admitir_procesos(void) {
 	pthread_mutex_init(&mutex_lista_ready, NULL);
 
 	while(1) {
-
+		sem_wait(&sem_grado_multiprogramacion);
+		sem_wait(&sem_new);
 		//pthread_mutex_lock(&mutex_plani_running);
 		if (!plani_running) {
 			//pthread_mutex_unlock(&mutex_plani_running);
@@ -94,14 +96,18 @@ void admitir_procesos(void) {
 		else {
 			//pthread_mutex_unlock(&mutex_plani_running);
 		}
-		sem_wait(&sem_grado_multiprogramacion);
-		sem_wait(&sem_new);
+		//sem_wait(&sem_grado_multiprogramacion);
+		//sem_wait(&sem_new);
 		pthread_mutex_lock(&mutex_new);
-		t_pcb *pcb_ready = queue_pop(cola_new);
-		pthread_mutex_unlock(&mutex_new);
+		if(!queue_is_empty(cola_new)) {
+			t_pcb *pcb_ready = queue_pop(cola_new);
+			pthread_mutex_unlock(&mutex_new);
 
-		pcb_new_a_ready(pcb_ready);
-		pthread_cond_signal(&cond_ready_agregado);
+			pcb_new_a_ready(pcb_ready);
+			pthread_cond_signal(&cond_ready_agregado);
+		}
+		else
+			pthread_mutex_unlock(&mutex_new);
 	}
 }
 
@@ -121,6 +127,32 @@ void finalizar_procesos(void) {
 	}
 }
 
+void fin_proc(uint32_t _pid) {
+	t_pcb* pcb = NULL;
+
+	pcb = buscar_proceso_cola(cola_new, _pid);
+
+	if(!pcb) {
+		pcb = buscar_proceso_lista(lista_ready, _pid);
+	}
+	if(!pcb) {
+		pcb = buscar_proceso_diccionario(colas_blocked, _pid);
+	}
+	if(pcb) {
+		pthread_mutex_lock(&mutex_exit);
+		queue_push(cola_exit, pcb);
+		pthread_mutex_unlock(&mutex_exit);
+		sem_post(&sem_exit);
+		return;
+	}
+	if(proceso_en_exec == pcb) {
+		enviar_mensaje("finalizar", DESALOJO_POR_EXIT, sockets[SOCK_CPU_INT]);
+	}
+	if(!pcb) {
+		log_info(kernel_logger, "FINALIZAR_PROCESO: no existe el proceso con PID <%d>", _pid);
+	}
+}
+
 
 void fifo(t_list* procesos_en_ready) {
 	t_pcb* pcb;
@@ -131,32 +163,37 @@ void fifo(t_list* procesos_en_ready) {
 
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
 	pcb->estado = EXEC;
+	/*
+	pthread_mutex_lock(&mutex_proceso_en_exec);
+	proceso_en_exec = pcb;
+	pthread_mutex_unlock(&mutex_proceso_en_exec);
+	*/
 	pthread_mutex_lock(&mutex_bloqueado);
 	bloqueado = false;
 	pthread_mutex_unlock(&mutex_bloqueado);
 	do {
-	t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
-	enviar_paquete(paquete, sockets[SOCK_CPU_DISPATCH]);
-	eliminar_paquete(paquete);
-	paquete = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
+		t_paquete* paquete = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
+		enviar_paquete(paquete, sockets[SOCK_CPU_DISPATCH]);
+		eliminar_paquete(paquete);
+		paquete = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
 
-	eliminar_contexto_ejecucion(pcb->contexto);
-	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
+		eliminar_contexto_ejecucion(pcb->contexto);
+		pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
 
-	deserializar_contexto_ejecucion(pcb->contexto, paquete);
+		deserializar_contexto_ejecucion(pcb->contexto, paquete);
 
-	if(pcb->contexto->inst_desalojador->identificador != EXIT) {
-		atender_cpu(pcb, paquete->codigo_operacion);
+		if(pcb->contexto->inst_desalojador->identificador != EXIT) {
+			atender_cpu(pcb, paquete->codigo_operacion);
 
-	}
-	else {
-		pthread_mutex_lock(&mutex_exit);
-		queue_push(cola_exit, pcb);
-		pthread_mutex_unlock(&mutex_exit);
-		sem_post(&sem_exit);
-	}
+		}
+		else {
+			pthread_mutex_lock(&mutex_exit);
+			queue_push(cola_exit, pcb);
+			pthread_mutex_unlock(&mutex_exit);
+			sem_post(&sem_exit);
+		}
 
-	eliminar_paquete(paquete);
+		eliminar_paquete(paquete);
 	} while(!bloqueado && pcb->contexto->inst_desalojador->identificador != EXIT);
 }
 
@@ -229,13 +266,63 @@ void mostrar_procesos_involucrados_deadlock(t_list *procesos) {
 		}
 		log_info(kernel_logger, "Deadlock detectado: <%d> - Recursos en posesión <%s> - Recurso requerido: <%s>", proceso->contexto->pid, recursos_asignados, proceso->recurso_pendiente);
 		free(recursos_asignados);
-		list_destroy(keys);
+		//list_clean_and_destroy_elements(keys, free);
 	}
 }
 
+t_pcb* buscar_proceso_cola(t_queue *cola, int pid) {
+	int i = 0, cant_elementos = queue_size(cola);
+	t_pcb* proceso;
 
+	while(i < cant_elementos) {
 
+		proceso = list_get(cola->elements, i);
 
+		if(proceso->contexto->pid == pid) {
+			t_pcb * ret = list_remove(cola->elements, i);
+			return ret;
+		}
+		i++;
+	}
 
+	return NULL;
+}
 
+t_pcb* buscar_proceso_lista(t_list *lista, int pid) {
+	int i = 0, cant_elementos = list_size(lista);
+	t_pcb* proceso;
+
+	while(i < cant_elementos) {
+
+		proceso = list_get(lista, i);
+
+		if(proceso->contexto->pid == pid) {
+			t_pcb *ret = list_remove(lista, i);
+			return ret;
+		}
+		i++;
+	}
+
+	return NULL;
+}
+
+t_pcb* buscar_proceso_diccionario(t_dictionary *dict, int pid) {
+	int i = 0, cant_elementos = dictionary_size(dict);
+	t_list *keys = dictionary_keys(dict);
+	t_pcb* proceso;
+
+	while(i < cant_elementos) {
+		char* key = list_get(keys, i);
+		t_queue *cola_block = (t_queue*)dictionary_get(dict, key);
+		proceso = buscar_proceso_cola(cola_block, pid);
+
+		if(proceso) {
+			//list_clean_and_destroy_elements(keys, free);
+			return proceso;
+		}
+		i++;
+	}
+
+	return NULL;
+}
 

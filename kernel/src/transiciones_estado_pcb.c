@@ -22,7 +22,8 @@ void pcb_a_exit(t_pcb *_pcb) {
 	_pcb->estado = EXIT;
 	//liberar_recursos(_pcb);
 
-	eliminar_pcb(_pcb);
+	//eliminar_pcb(_pcb);
+	liberar_recursos_asignados(_pcb);
 	free(estado);
 
 }
