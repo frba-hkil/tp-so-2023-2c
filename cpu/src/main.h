@@ -20,6 +20,7 @@ typedef struct {
 
 
 bool desalojar = false;
+bool terminar = false;
 t_sockets sockets;
 t_log *logger;
 

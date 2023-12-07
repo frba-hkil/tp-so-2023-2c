@@ -45,4 +45,11 @@ void atender_deadlock(void);
 
 void mostrar_procesos_involucrados_deadlock(t_list *procesos);
 
+void fin_proc(uint32_t _pid);
+
+t_pcb* buscar_proceso_cola(t_queue *cola, int pid);
+
+t_pcb* buscar_proceso_lista(t_list *lista, int pid);
+
+t_pcb* buscar_proceso_diccionario(t_dictionary *dict, int pid);
 #endif /* SRC_PLANIFICADORES_H_ */

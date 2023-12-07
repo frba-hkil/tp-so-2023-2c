@@ -60,6 +60,8 @@ void hilo_interrupt() {
         if (pqt->codigo_operacion==DESALOJAR_PROCESO) {
             desalojar = true;
         }
+        else if (pqt->codigo_operacion == FIN_PROCESO)
+        	terminar = true;
 
         eliminar_paquete(pqt);
     }
@@ -231,6 +233,16 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
             devolver = true;
             protocolo = DESALOJO_POR_IRQ;
             desalojar = false;
+        }
+        if(terminar) {
+        	devolver = true;
+        	protocolo = DESALOJO_POR_EXIT;
+        	contexto->inst_desalojador->identificador = EXIT;
+        	free(contexto->inst_desalojador->primer_operando);
+        	contexto->inst_desalojador->primer_operando = string_duplicate("\0");
+        	free(contexto->inst_desalojador->segundo_operando);
+        	contexto->inst_desalojador->segundo_operando = string_duplicate("\0");
+        	terminar = false;
         }
 
         if (devolver) {

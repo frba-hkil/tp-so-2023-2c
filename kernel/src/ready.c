@@ -31,3 +31,7 @@ pthread_mutex_t mutex_recursos_p = PTHREAD_MUTEX_INITIALIZER;
 sem_t sem_check_deadlock;
 
 sem_t retomar;
+
+t_pcb *proceso_en_exec;
+
+pthread_mutex_t mutex_proceso_en_exec = PTHREAD_MUTEX_INITIALIZER;

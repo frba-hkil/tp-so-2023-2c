@@ -5,6 +5,7 @@ void escuchar_consola(void) {
 	generador_de_id = 0;
 	plani_running = 0;
 	command_handlers[0] = iniciar_proceso;
+	command_handlers[1] = finalizar_proceso;
 	command_handlers[2] = detener_planificacion;
 	command_handlers[3] = iniciar_planificacion;
 	command_handlers[4] = cambiar_multiprogramacion;
@@ -52,6 +53,7 @@ void finalizar_proceso(char** parametros) {
 	//si esta en cualquier otro estado lo termino en el instante
 	//funcion: liberar recursos y cambiar estado a EXIT
 	//signal(grado multiprogramacion)
+	fin_proc(atoi(parametros[0]));
 }
 
 void iniciar_planificacion(char** parametros) {

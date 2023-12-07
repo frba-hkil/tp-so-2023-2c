@@ -24,31 +24,41 @@ void prioridades(t_list* procesos_en_ready) {
 	log_info(kernel_logger, "PID: <%d> - Estado Anterior: <READY> - Estado Actual: <EXEC>", pcb->contexto->pid);
 	pcb->estado = EXEC;
 
-	t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
-	enviar_paquete(packet, sockets[SOCK_CPU_DISPATCH]);
-	eliminar_paquete(packet);
+	pthread_mutex_lock(&mutex_proceso_en_exec);
+	proceso_en_exec = pcb;
+	pthread_mutex_unlock(&mutex_proceso_en_exec);
 
-	pthread_create(&thread_check, NULL, (void*)check_higher_prio, pcb);
-	pthread_detach(thread_check);
-	packet = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
-	contexto_devuelto = true;
+	pthread_mutex_lock(&mutex_bloqueado);
+	bloqueado = false;
+	pthread_mutex_unlock(&mutex_bloqueado);
 
-	eliminar_contexto_ejecucion(pcb->contexto);
-	pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
+	do {
+		t_paquete* packet = serializar_contexto_ejecucion(pcb->contexto, CONTEXTO_EJECUCION);
+		enviar_paquete(packet, sockets[SOCK_CPU_DISPATCH]);
+		eliminar_paquete(packet);
 
-	deserializar_contexto_ejecucion(pcb->contexto, packet);
+		pthread_create(&thread_check, NULL, (void*)check_higher_prio, pcb);
+		pthread_detach(thread_check);
+		packet = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
+		contexto_devuelto = true;
 
-	if(pcb->contexto->inst_desalojador->identificador != EXIT) {
-		atender_cpu(pcb, packet->codigo_operacion);
-	}
-	else {
-		pthread_mutex_lock(&mutex_exit);
-		queue_push(cola_exit, pcb);
-		pthread_mutex_unlock(&mutex_exit);
-		sem_post(&sem_exit);
-	}
+		eliminar_contexto_ejecucion(pcb->contexto);
+		pcb->contexto = malloc(sizeof(t_contexto_ejecucion));
 
-	eliminar_paquete(packet);
+		deserializar_contexto_ejecucion(pcb->contexto, packet);
+
+		if(pcb->contexto->inst_desalojador->identificador != EXIT) {
+			atender_cpu(pcb, packet->codigo_operacion);
+		}
+		else {
+			pthread_mutex_lock(&mutex_exit);
+			queue_push(cola_exit, pcb);
+			pthread_mutex_unlock(&mutex_exit);
+			sem_post(&sem_exit);
+		}
+
+		eliminar_paquete(packet);
+	} while(!bloqueado && pcb->contexto->inst_desalojador->identificador != EXIT);
 }
 
 void* mayor_prioridad(void* pcb1, void* pcb2) {

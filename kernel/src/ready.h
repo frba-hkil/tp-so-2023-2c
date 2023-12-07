@@ -42,4 +42,8 @@ extern sem_t sem_check_deadlock;
 
 extern sem_t retomar;
 
+extern t_pcb *proceso_en_exec;
+
+extern pthread_mutex_t mutex_proceso_en_exec;
+
 #endif /* SRC_READY_H_ */
