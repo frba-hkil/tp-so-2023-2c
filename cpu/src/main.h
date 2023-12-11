@@ -21,6 +21,7 @@ typedef struct {
 
 bool desalojar = false;
 bool terminar = false;
+uint32_t page_size;
 t_sockets sockets;
 t_log *logger;
 

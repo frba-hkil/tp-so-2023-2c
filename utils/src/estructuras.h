@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include <commons/string.h>
@@ -72,6 +73,30 @@ typedef struct {
 } t_recurso;
 
 typedef struct {
+	int32_t nro_pag;
+	int32_t desplazamiento;
+} t_direccion_logica;
+
+typedef struct {
+	int32_t nro_frame;
+	int32_t desplazamiento;
+} t_direccion_fisica;
+
+typedef struct {
+	uint32_t nro_pagina; //nro pagina
+	int64_t ultimo_acceso;
+	uint32_t nro_frame;
+	bool presente;
+	bool modificado;
+	//posicion en swap;
+} t_entrada_tabla_pagina;
+
+typedef struct {
+	uint32_t pid;
+	t_list *entradas; //lista de t_pagina
+} t_tabla_pagina;
+
+typedef struct {
 	uint32_t cantidad_entradas_tabla;
 	uint32_t tamanio_pagina;
 } t_traductor;
@@ -80,7 +105,6 @@ typedef struct {
 	uint32_t direccion;
 	uint32_t entrada;
 } t_tabla_acceso;
-
 
 t_instruccion *crear_instruccion(t_op_code identificador, char* primer_operando, char* segundo_operando);
 void eliminar_instrucciones(t_list *instrucciones);

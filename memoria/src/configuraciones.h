@@ -13,10 +13,10 @@ typedef struct
     char* PUERTO_ESCUCHA;
     char* IP_FILESYSTEM;
     char* PUERTO_FILESYSTEM;
-    int TAM_MEMORIA;
-    int TAM_PAGINA;
+    uint32_t TAM_MEMORIA;
+    uint32_t TAM_PAGINA;
     char* PATH_INSTRUCCIONES;
-    int RETARDO_RESPUESTA;
+    uint32_t RETARDO_RESPUESTA;
     char* ALGORITMO_REEMPLAZO;
 }t_memoria_config;
 

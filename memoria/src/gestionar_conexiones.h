@@ -4,6 +4,7 @@
 #include "memoria_global.h"
 #include "cargar_instrucciones.h"
 #include "mem_sockets.h"
+#include "paginas.h"
 #include <serializador.h>
 #include <commons/string.h>
 #include <estructuras.h>
@@ -24,7 +25,7 @@ void enviar_direccion_tabla_segundo_nivel(int socket_fd, uint32_t direccion);
 void enviar_numero_marco_de_pagina(int socket_fd, uint32_t numero);
 void enviar_valor_leido_de_memoria(int socket_fd, uint32_t valor);
 void informar_escritura_realizada(int socket_fd, t_protocolo protocolo);
-uint32_t recibir_proceso(t_paquete* paquete);
+void recibir_proceso(t_paquete* paquete);
 
 void atender_kernel(void);
 void atender_cpu(void);

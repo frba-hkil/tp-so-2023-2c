@@ -24,7 +24,10 @@ void escuchar_kernel(void) {
 		switch(paquete->codigo_operacion) {
 
 		case INICIALIZACION_DE_PROCESO:
-			uint32_t tamanio_proceso = recibir_proceso(paquete);
+			recibir_proceso(paquete);
+			break;
+		case FINALIZACION_DE_PROCESO:
+			eliminar_estructuras(paquete);
 			break;
 		default:
 			;
@@ -37,6 +40,11 @@ void escuchar_kernel(void) {
 void escuchar_cpu(void) {
 	t_paquete* paquete;
 	t_contexto_ejecucion *ce;
+
+	paquete = crear_paquete(HANDSHAKE_INICIAL, buffer_vacio());
+	agregar_a_paquete(paquete, &memoria_config->TAM_PAGINA, sizeof(int));
+	enviar_paquete(paquete, sockets_m.s_cpu);
+	eliminar_paquete(paquete);
 
 	while(1) {
 		ce = malloc(sizeof(t_contexto_ejecucion));
@@ -51,6 +59,7 @@ void escuchar_cpu(void) {
 
 			enviar_instruccion(ce, paquete);
 			break;
+
 		default:
 			;
 		}
@@ -58,33 +67,7 @@ void escuchar_cpu(void) {
 	}
 }
 
-/*
-void procesar_conexiones(t_cliente *datos_cliente) {
-	
-	t_paquete *paquete = datos_cliente->paquete;
-	switch (paquete->codigo_operacion) {
-		// KERNEL
-		case INICIALIZACION_DE_PROCESO:
-			uint32_t tamanio_proceso = recibir_proceso(paquete);
-			//log_info(memoria_logger, "Inicializando estructuras de PID[%d]...", pcb->id);
-			//swap_crear_archivo(pcb->id, pcb->tamanio_proceso);
-			//uint32_t tabla_primer_nivel = crear_tablas_de_paginacion(pcb->id);
-			//enviar_direccion_tabla_primer_nivel(datos_cliente->socket, tabla_primer_nivel);
-
-			//eliminar_pcb(pcb);
-			break;
-
-		case SOLICITAR_INSTRUCCION:
-			enviar_instruccion(sockets_m.s_cpu, paquete);
-			break;
-		default:
-			log_error(memoria_logger, "Protocolo invalido.");
-			break;
-	}
-	//eliminar_paquete(paquete);
-}
-*/
-uint32_t recibir_proceso(t_paquete* paquete){
+void recibir_proceso(t_paquete* paquete){
 	t_list* datos = deserealizar_paquete(paquete);
 	uint32_t pid = *(uint32_t *)list_get(datos, 0);
 	uint32_t tamanio_proceso = *(uint32_t *)list_get(datos, 1);
@@ -98,9 +81,11 @@ uint32_t recibir_proceso(t_paquete* paquete){
 
 	list_destroy_and_destroy_elements(datos, free);
 
-	//print_instrucciones(memoria_logger, instrucciones);
+	int cant_paginas_proceso = ceil((double)(tamanio_proceso / memoria_config->TAM_PAGINA));
+	t_tabla_pagina *tabla_pag_proceso = crear_tp(pid, cant_paginas_proceso);
+	list_add(tablas_de_paginas, tabla_pag_proceso);
 
-	return tamanio_proceso;
+	//solicitar_espacio_swap(pid, cant_paginas_swap);
 }
 
 void enviar_instruccion(t_contexto_ejecucion* ce, t_paquete* paquete){
@@ -108,7 +93,15 @@ void enviar_instruccion(t_contexto_ejecucion* ce, t_paquete* paquete){
 	t_instruccion* inst = (t_instruccion*)list_get(instrucciones, ce->program_counter);
 	//print_instrucciones(memoria_logger, instrucciones);
 	paquete = serializar_instruccion(inst, INSTRUCCION);
-	enviar_paquete(paquete, sockets_m.s_cpu);
+	if(inst->identificador == MOV_IN || inst->identificador == MOV_OUT) {
+		enviar_paquete(paquete, sockets_m.s_cpu);
+		eliminar_paquete(paquete);
+		paquete = recibir_paquete(sockets_m.s_cpu);
+		retornar_nro_frame(paquete);
+	}
+	else {
+		enviar_paquete(paquete, sockets_m.s_cpu);
+	}
 	eliminar_paquete(paquete);
 }
 

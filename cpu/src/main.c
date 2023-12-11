@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
     sockets.dispatch= iniciar_modulo_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_DISPATCH"), logger);
     sockets.interrupt = iniciar_modulo_servidor(config_get_string_value(cfg, "IP_CPU"), config_get_string_value(cfg, "PUERTO_ESCUCHA_INTERRUPT"), logger);
     sockets.memoria = conectar_a_modulo(config_get_string_value(cfg, "IP_MEMORIA"), config_get_string_value(cfg, "PUERTO_MEMORIA"), logger);
-
+    page_size = get_page_size();
     iniciar_hilos_cpu();
 
     config_destroy(cfg);
@@ -184,6 +184,17 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
             } else if (instruccion->identificador == MOV_IN) {
                 //MOV_IN (Registro, Dirección Lógica): Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
                 log_info(logger, "PID: %d - Accion: LEER - Direccion Fisica: <DIRECCION_FISICA> - Valor: <VALOR_LEIDO>", contexto->pid);
+                uint32_t nro_pagina = (uint32_t)floor((atof(instruccion->segundo_operando) / (double)page_size));
+                uint32_t desplazamiento = atoi(instruccion->segundo_operando) - nro_pagina * page_size;
+                uint32_t *nro_frame = solicitar_nro_frame(&nro_pagina, contexto->pid);
+                if(!nro_frame) {
+                	protocolo = DESALOJO_PAGE_FAULT;	//reconocemos que es una syscall mas, pero utilizamos un protocolo diferente para mas facilidad
+                	devolver = true;
+                	contexto->program_counter--;
+                }
+                else {
+                	//leer_de_memoria(contexto, nro_frame, desplazamiento)
+                }
 
             } else if (instruccion->identificador == MOV_OUT) {
                 //MOV_OUT (Dirección Lógica, Registro): Lee el valor del Registro y lo escribe en la dirección física de memoria obtenida a partir de la Dirección Lógica.
@@ -256,3 +267,35 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
         eliminar_paquete(pqt);
     }    
 }
+
+uint32_t get_page_size(void) {
+	t_paquete *paquete = recibir_paquete(sockets.memoria);
+	t_list *data = deserealizar_paquete(paquete);
+	uint32_t size = *(uint32_t*)list_get(data, 0);
+
+	free(list_get(data, 0));
+	list_destroy(paquete);
+	eliminar_paquete(paquete);
+
+	return size;
+}
+
+uint32_t solicitar_nro_frame(uint32_t *n_pagina, uint32_t pid) {
+	t_paquete *paquete = crear_paquete(ACCESO_TP, buffer_vacio());
+
+	agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
+	agregar_a_paquete(paquete, n_pagina, sizeof(uint32_t));
+	enviar_paquete(paquete, sockets.memoria);
+	eliminar_paquete(paquete);
+	paquete = recibir_paquete(sockets.memoria);
+	t_list *data = deserealizar_paquete(paquete);
+	uint32_t nro_frame = *(uint32_t*)list_get(data, 0);
+
+	free(list_get(data, 0));
+	list_destroy(data);
+	eliminar_paquete(paquete);
+
+	return nro_frame;
+}
+
+
