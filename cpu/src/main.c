@@ -184,8 +184,8 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
             } else if (instruccion->identificador == MOV_IN) {
                 //MOV_IN (Registro, Dirección Lógica): Lee el valor de memoria correspondiente a la Dirección Lógica y lo almacena en el Registro.
                 log_info(logger, "PID: %d - Accion: LEER - Direccion Fisica: <DIRECCION_FISICA> - Valor: <VALOR_LEIDO>", contexto->pid);
-                uint32_t nro_pagina = (uint32_t)floor((atof(instruccion->segundo_operando) / (double)page_size));
-                uint32_t desplazamiento = atoi(instruccion->segundo_operando) - nro_pagina * page_size;
+                nro_pagina = (atoi(instruccion->segundo_operando) / page_size);
+                desplazamiento = atoi(instruccion->segundo_operando) - nro_pagina * page_size;
                 uint32_t *nro_frame = solicitar_nro_frame(&nro_pagina, contexto->pid);
                 if(!nro_frame) {
                 	protocolo = DESALOJO_PAGE_FAULT;	//reconocemos que es una syscall mas, pero utilizamos un protocolo diferente para mas facilidad
@@ -193,12 +193,23 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
                 	contexto->program_counter--;
                 }
                 else {
-                	//leer_de_memoria(contexto, nro_frame, desplazamiento)
+                	leer_de_memoria(contexto, instruccion->primer_operando, nro_frame, desplazamiento);
                 }
 
             } else if (instruccion->identificador == MOV_OUT) {
                 //MOV_OUT (Dirección Lógica, Registro): Lee el valor del Registro y lo escribe en la dirección física de memoria obtenida a partir de la Dirección Lógica.
                 log_info(logger, "PID: %d - Accion: ESCRIBIR - Direccion Fisica: <DIRECCION_FISICA> - Valor: <VALOR_ESCRITO>", contexto->pid);
+                nro_pagina = (atoi(instruccion->segundo_operando) / page_size);
+                desplazamiento = atoi(instruccion->segundo_operando) - nro_pagina * page_size;
+                uint32_t *nro_frame = solicitar_nro_frame(&nro_pagina, contexto->pid);
+                if(!nro_frame) {
+                protocolo = DESALOJO_PAGE_FAULT;	//reconocemos que es una syscall mas, pero utilizamos un protocolo diferente para mas facilidad
+                devolver = true;
+                contexto->program_counter--;
+                }
+                else {
+                	escribir_en_memoria(contexto, instruccion->primer_operando, nro_frame, desplazamiento);
+                }
             } else if (instruccion->identificador == F_OPEN) {
                 //F_OPEN (Nombre Archivo, Modo Apertura): Esta instrucción solicita al kernel que abra el archivo pasado por parámetro con el modo de apertura indicado.
                 devolver = true; 
@@ -257,10 +268,15 @@ void ejecutarInstrucciones(t_contexto_ejecucion *contexto, int socket_kernel) {
         }
 
         if (devolver) {
-        	//log_info(logger, "exit: PID %d", contexto->pid);
-            t_paquete *cntx = serializar_contexto_ejecucion(contexto, protocolo);
-            enviar_paquete(cntx, socket_kernel);
-            eliminar_paquete(cntx);
+        	t_paquete *cntx = serializar_contexto_ejecucion(contexto, protocolo);
+        	enviar_paquete(cntx, socket_kernel);
+        	eliminar_paquete(cntx);
+        	if(contexto->inst_desalojador->identificador == MOV_IN || contexto->inst_desalojador->identificador == MOV_OUT) {
+        		cntx = crear_paquete(PAGE_FAULT, buffer_vacio());
+        		agregar_a_paquete(cntx, &nro_pagina, sizeof(uint32_t));
+        		enviar_paquete(cntx, socket_kernel);
+        		eliminar_paquete(cntx);
+        	}
             break;
         }
 
@@ -273,14 +289,13 @@ uint32_t get_page_size(void) {
 	t_list *data = deserealizar_paquete(paquete);
 	uint32_t size = *(uint32_t*)list_get(data, 0);
 
-	free(list_get(data, 0));
-	list_destroy(paquete);
+	list_destroy_and_destroy_elements(data, free);
 	eliminar_paquete(paquete);
 
 	return size;
 }
 
-uint32_t solicitar_nro_frame(uint32_t *n_pagina, uint32_t pid) {
+uint32_t *solicitar_nro_frame(uint32_t *n_pagina, uint32_t pid) {
 	t_paquete *paquete = crear_paquete(ACCESO_TP, buffer_vacio());
 
 	agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
@@ -289,7 +304,7 @@ uint32_t solicitar_nro_frame(uint32_t *n_pagina, uint32_t pid) {
 	eliminar_paquete(paquete);
 	paquete = recibir_paquete(sockets.memoria);
 	t_list *data = deserealizar_paquete(paquete);
-	uint32_t nro_frame = *(uint32_t*)list_get(data, 0);
+	uint32_t *nro_frame = (uint32_t*)list_get(data, 0);
 
 	free(list_get(data, 0));
 	list_destroy(data);
@@ -298,4 +313,49 @@ uint32_t solicitar_nro_frame(uint32_t *n_pagina, uint32_t pid) {
 	return nro_frame;
 }
 
+void leer_de_memoria(t_contexto_ejecucion *contexto, char* reg, uint32_t *nro_frame, uint32_t desplazamiento) {
+	t_paquete *paquete = crear_paquete(LEER_MEMORIA, buffer_vacio());
+	agregar_a_paquete(paquete, &contexto->pid, sizeof(uint32_t));
+	agregar_a_paquete(paquete, nro_frame, sizeof(uint32_t));
+	agregar_a_paquete(paquete, &desplazamiento, sizeof(uint32_t));
 
+	enviar_paquete(paquete, sockets.memoria);
+	eliminar_paquete(paquete);
+
+	paquete = recibir_paquete(sockets.memoria);
+	t_list* data = deserealizar_paquete(paquete);
+	uint32_t valor_leido = *(uint32_t*)list_get(data, 0);
+
+	if (reg[0] == 'A')
+	    contexto->registros->AX = valor_leido;
+	else if(reg[0] == 'B')
+	    contexto->registros->BX = valor_leido;
+	else if(reg[0] == 'C')
+	    contexto->registros->CX = valor_leido;
+	else if(reg[0] == 'D')
+	    contexto->registros->DX = valor_leido;
+
+	list_destroy_and_destroy_elements(data, free);
+	eliminar_paquete(paquete);
+}
+
+void escribir_en_memoria(t_contexto_ejecucion *contexto, char* reg, uint32_t *nro_frame, uint32_t desplazamiento) {
+	t_paquete *paquete = crear_paquete(ESCRIBIR_MEMORIA, buffer_vacio());
+	agregar_a_paquete(paquete, &contexto->pid, sizeof(uint32_t));
+	agregar_a_paquete(paquete, nro_frame, sizeof(uint32_t));
+	agregar_a_paquete(paquete, &desplazamiento, sizeof(uint32_t));
+	//paquete = recibir_paquete(sockets.memoria);
+	uint32_t *valor_a_escribir;
+
+	if (reg[0] == 'A')
+	   valor_a_escribir = &contexto->registros->AX;
+	else if(reg[0] == 'B')
+		valor_a_escribir = &contexto->registros->BX;
+	else if(reg[0] == 'C')
+		valor_a_escribir = &contexto->registros->CX;
+	else if(reg[0] == 'D')
+		valor_a_escribir = &contexto->registros->DX;
+	agregar_a_paquete(paquete, valor_a_escribir, sizeof(uint32_t));
+	enviar_paquete(paquete, sockets.memoria);
+	eliminar_paquete(paquete);
+}

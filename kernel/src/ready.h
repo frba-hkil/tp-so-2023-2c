@@ -48,4 +48,6 @@ extern t_pcb *proceso_en_exec;
 
 extern pthread_mutex_t mutex_proceso_en_exec;
 
+extern t_pcb *proceso_bloqueado_por_pf;
+
 #endif /* SRC_READY_H_ */

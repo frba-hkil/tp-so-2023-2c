@@ -37,3 +37,5 @@ sem_t retomar;
 t_pcb *proceso_en_exec;
 
 pthread_mutex_t mutex_proceso_en_exec = PTHREAD_MUTEX_INITIALIZER;
+
+t_pcb *proceso_bloqueado_por_pf;

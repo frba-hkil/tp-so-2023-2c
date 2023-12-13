@@ -17,6 +17,11 @@ void init(char *config_path) {
 	bitmap_frames = bitarray_create_with_mode(memoria, (size_t)(cantidad_frames / 8), LSB_FIRST);
 	if(string_equals_ignore_case(memoria_config->ALGORITMO_REEMPLAZO, "lru")){
 		timer_lru = temporal_create();
+		reemplazar_pagina = lru;
+	}
+	else {
+		paginas_en_memoria = queue_create();
+		reemplazar_pagina = fifo;
 	}
 }
 

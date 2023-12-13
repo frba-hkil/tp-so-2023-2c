@@ -4,7 +4,7 @@
 #include <commons/log.h>
 #include <stdlib.h>
 #include <commons/string.h>
-
+#include <stdint.h>
 
 
 typedef struct 

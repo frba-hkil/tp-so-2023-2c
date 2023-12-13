@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include "ready.h"
 
-void atender_cpu(t_pcb* pcb, t_protocolo protocolo);
+void atender_cpu(t_pcb* pcb, t_protocolo);
 
 void atender_syscall(t_pcb* pcb);
 

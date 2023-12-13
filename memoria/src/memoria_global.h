@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <commons/log.h>
 #include <commons/collections/list.h>
+#include <commons/collections/queue.h>
 #include <commons/bitarray.h>
 #include <commons/temporal.h>
 #include <commons/string.h>
@@ -22,6 +23,8 @@ void *memoria; //representa el espacio de usuario
 uint32_t cantidad_frames; // tam_memoria / tam_pagina
 t_bitarray *bitmap_frames;
 t_temporal *timer_lru;
+void (*reemplazar_pagina)(t_entrada_tabla_pagina*, uint32_t);
+t_queue *paginas_en_memoria;
 
 t_list *tablas_de_paginas; //lista donde se almacena la tabla de pagina x proceso
 t_list *bitmap_marcos;

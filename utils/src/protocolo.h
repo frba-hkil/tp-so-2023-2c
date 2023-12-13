@@ -25,8 +25,10 @@ typedef enum {
 	INSTRUCCION,  					// Protocolo que envia Memoria a CPU la siguiente instruccion a ejecutar
 	NO_INSTRUCCION,					// Protocolo que envia Memoria a CPU para indicar que no hay mas instrucciones
 
+	ACTUALIZAR_VALORES_SWAP,		// Protocolo que envia Memoria a FS para que actualice los valores de una pagina reemplazada en memoria
+
 	RET_FRAME,						// Protocolo que envia Memoria a MMU que indica que encontro el frame
-	PAGE_FAULT,						// Protocolo que envia Memoria a MMU que indica que no se encontro el frame
+	PAGE_FAULT,						// Protocolo que envia Memoria a MMU y kernel a memoria que indica page fault
 	PAGE_SIZE,						//Protocolo que envia CPU/MMU a Memoria para pedir el tamanio de pagina para calcular el nro de pagina
 	ACCESO_TP,						//Protocolo que envia CPU/MMU a Memoria para pedir el nro de frame
 	HANDSHAKE_INICIAL,				// Protocolo que envia CPU a Memoria e indica el envio de la configuracion para traducir direcciones logicas a fisicas

@@ -29,6 +29,9 @@ void escuchar_kernel(void) {
 		case FINALIZACION_DE_PROCESO:
 			eliminar_estructuras(paquete);
 			break;
+		case PAGE_FAULT:
+			manejar_page_fault(paquete);
+			break;
 		default:
 			;
 
@@ -81,11 +84,11 @@ void recibir_proceso(t_paquete* paquete){
 
 	list_destroy_and_destroy_elements(datos, free);
 
-	int cant_paginas_proceso = ceil((double)(tamanio_proceso / memoria_config->TAM_PAGINA));
+	uint32_t cant_paginas_proceso = ceil((double)(tamanio_proceso / memoria_config->TAM_PAGINA));
 	t_tabla_pagina *tabla_pag_proceso = crear_tp(pid, cant_paginas_proceso);
 	list_add(tablas_de_paginas, tabla_pag_proceso);
 
-	//solicitar_espacio_swap(pid, cant_paginas_swap);
+	solicitar_espacio_swap(pid, cant_paginas_proceso);
 }
 
 void enviar_instruccion(t_contexto_ejecucion* ce, t_paquete* paquete){
@@ -105,41 +108,26 @@ void enviar_instruccion(t_contexto_ejecucion* ce, t_paquete* paquete){
 	eliminar_paquete(paquete);
 }
 
-void enviar_direccion_tabla_primer_nivel(int socket_fd, uint32_t direccion) {
-	enviar_datos(socket_fd, &direccion, sizeof(uint32_t));
-}
+void solicitar_espacio_swap(uint32_t pid, uint32_t cantidad_paginas_proceso) {
+	t_paquete *paquete = crear_paquete(INICIALIZACION_DE_PROCESO, buffer_vacio());
 
-void informar_estado_proceso(int socket_fd, t_protocolo protocolo) {
-	enviar_datos(socket_fd, &protocolo, sizeof(t_protocolo));
-}
-
-void enviar_estructura_traductora(int socket_fd, t_traductor *traductor) {
-	t_paquete *paquete = serializar_traductor(traductor, HANDSHAKE_INICIAL);
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_paquete(paquete, socket_fd);
+	agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
+	agregar_a_paquete(paquete, &cantidad_paginas_proceso, sizeof(uint32_t));
+	enviar_paquete(paquete, sockets_m.s_fs);
 	eliminar_paquete(paquete);
-}
 
-void enviar_direccion_tabla_segundo_nivel(int socket_fd, uint32_t direccion) {
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_datos(socket_fd, &direccion, sizeof(uint32_t));
-}
+	paquete = recibir_paquete(sockets_m.s_fs);
+	t_list *valores = deserializar_valores_enteros(paquete); //posiciones de bloques en swap
 
-void enviar_numero_marco_de_pagina(int socket_fd, uint32_t numero) {
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_datos(socket_fd, &numero, sizeof(uint32_t));
-}
+	t_tabla_pagina *tp = buscar_tabla_proceso(pid);
 
-void enviar_valor_leido_de_memoria(int socket_fd, uint32_t valor) {
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_datos(socket_fd, &valor, sizeof(uint32_t));
+	int i = 0, cant_entradas = list_size(tp->entradas);
+	while(i < cant_entradas) {
+		t_entrada_tabla_pagina* etp = (t_entrada_tabla_pagina*)list_get(tp->entradas, i);
+		etp->posicion_en_swap = *(uint32_t*)list_get(valores, i);
+	}
+	list_destroy_and_destroy_elements(valores, free);
 }
-
-void informar_escritura_realizada(int socket_fd, t_protocolo protocolo) {
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_datos(socket_fd, &protocolo, sizeof(t_protocolo));
-}
-
 
 static void retardo_respuesta(uint32_t tiempo) {
 	usleep(tiempo * 1000);

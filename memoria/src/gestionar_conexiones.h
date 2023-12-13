@@ -26,6 +26,7 @@ void enviar_numero_marco_de_pagina(int socket_fd, uint32_t numero);
 void enviar_valor_leido_de_memoria(int socket_fd, uint32_t valor);
 void informar_escritura_realizada(int socket_fd, t_protocolo protocolo);
 void recibir_proceso(t_paquete* paquete);
+void solicitar_espacio_swap(uint32_t pid, uint32_t cantidad_paginas_proceso);
 
 void atender_kernel(void);
 void atender_cpu(void);
