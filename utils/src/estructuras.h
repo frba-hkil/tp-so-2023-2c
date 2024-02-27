@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <commons/collections/list.h>
 #include <commons/collections/dictionary.h>
 #include <commons/string.h>
@@ -72,6 +73,30 @@ typedef struct {
 } t_recurso;
 
 typedef struct {
+	int32_t nro_pag;
+	int32_t desplazamiento;
+} t_direccion_logica;
+
+typedef struct {
+	int32_t nro_frame;
+	int32_t desplazamiento;
+} t_direccion_fisica;
+
+typedef struct {
+	uint32_t nro_pagina; //nro pagina
+	int64_t ultimo_acceso;
+	uint32_t nro_frame;
+	bool presente;
+	bool modificado;
+	uint32_t posicion_en_swap;
+} t_entrada_tabla_pagina;
+
+typedef struct {
+	uint32_t pid;
+	t_list *entradas; //lista de t_pagina
+} t_tabla_pagina;
+
+typedef struct {
 	uint32_t cantidad_entradas_tabla;
 	uint32_t tamanio_pagina;
 } t_traductor;
@@ -81,9 +106,8 @@ typedef struct {
 	uint32_t entrada;
 } t_tabla_acceso;
 
-
 t_instruccion *crear_instruccion(t_op_code identificador, char* primer_operando, char* segundo_operando);
-void eliminar_instrucciones(t_list *instrucciones);
+void eliminar_instrucciones(void *instrucciones);
 void eliminar_contexto_ejecucion(t_contexto_ejecucion* ce);
 t_pcb *crear_pcb(uint32_t id, uint32_t tamanio_proceso, uint32_t prioridad);
 void eliminar_pcb(t_pcb *pcb);
@@ -92,6 +116,7 @@ t_traductor *crear_traductor_direcciones(int entradas_tabla, int tamanio_pagina)
 void eliminar_traductor_direcciones(t_traductor *traductor);
 t_tabla_acceso *crear_tabla_de_acceso(uint32_t direccion, uint32_t entrada);
 void eliminar_tabla_de_acceso(t_tabla_acceso *tabla_acceso);
+void eliminar_instruccion(t_instruccion* inst);
 
 #endif /* ESTRUCTURAS_H_ */
 

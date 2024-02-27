@@ -6,6 +6,9 @@ void atender_cpu(t_pcb* pcb, t_protocolo protocolo) {
 	case DESALOJO_POR_SYSCALL:
 		atender_syscall(pcb);
 		break;
+	case DESALOJO_PAGE_FAULT:
+		//atender_page_fault(pcb);
+		break;
 	default:
 		;
 	}
@@ -210,4 +213,30 @@ void liberar_recurso(char* _key, void* n) {
 		}
 	}
 	*instancia = 0;
+}
+
+void atender_page_fault(t_pcb* pcb) {
+	pcb->estado = BLOCKED;
+	proceso_bloqueado_por_pf = pcb;
+
+	t_paquete *paquete = recibir_paquete(sockets[SOCK_CPU_DISPATCH]);
+	t_list *data = deserealizar_paquete(paquete);
+	eliminar_paquete(paquete);
+
+	paquete = crear_paquete(PAGE_FAULT, buffer_vacio());
+	agregar_a_paquete(paquete, (uint32_t*)list_get(data, 0), sizeof(uint32_t));
+	agregar_a_paquete(paquete, &(pcb->contexto->pid), sizeof(uint32_t));
+	enviar_paquete(paquete, sockets[SOCK_MEM]);
+	list_destroy_and_destroy_elements(data, free);
+	eliminar_paquete(paquete);
+
+	paquete = recibir_paquete(sockets[SOCK_MEM]);
+	data = deserealizar_paquete(paquete);
+	eliminar_paquete(paquete);
+
+	pcb->estado = READY;
+	pthread_mutex_lock(&mutex_lista_ready);
+	list_add(lista_ready, pcb);
+	pthread_mutex_unlock(&mutex_lista_ready);
+	sem_post(&sem_lista_ready);
 }

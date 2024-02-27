@@ -19,15 +19,19 @@ typedef enum {
 	DESALOJO_POR_EXIT,				// Protocolo que envia CPU a Kernel para indicar que el proceso fue desalojado por ejecutar EXIT
 	DESALOJO_POR_IRQ,				// Protocolo que envia CPU a Kernel para indicar que el proceso fue desalojado por interrupccion
 	DESALOJO_POR_SYSCALL,			// Protocolo que envia CPU a Kernel para indicar que el proceso fue desalojado para realizar una syscall
-	//FIN_PROCESO,				// Protocolo que envia CPU a Kernel para indicar que el proceso fue finalizado por comando
+	DESALOJO_PAGE_FAULT,			// Protocolo que envia CPU a Kernel para indicar que hubo page fault y hay que tratarlo
 
 	SOLICITAR_INSTRUCCION,  		// Protocolo que envia CPU a Memoria para solicitar la siguiente instruccion a ejecutar
 	INSTRUCCION,  					// Protocolo que envia Memoria a CPU la siguiente instruccion a ejecutar
 	NO_INSTRUCCION,					// Protocolo que envia Memoria a CPU para indicar que no hay mas instrucciones
 
+	ACTUALIZAR_VALORES_SWAP,		// Protocolo que envia Memoria a FS para que actualice los valores de una pagina reemplazada en memoria
+
+	RET_FRAME,						// Protocolo que envia Memoria a MMU que indica que encontro el frame
+	PAGE_FAULT,						// Protocolo que envia Memoria a MMU y kernel a memoria que indica page fault
+	PAGE_SIZE,						//Protocolo que envia CPU/MMU a Memoria para pedir el tamanio de pagina para calcular el nro de pagina
+	ACCESO_TP,						//Protocolo que envia CPU/MMU a Memoria para pedir el nro de frame
 	HANDSHAKE_INICIAL,				// Protocolo que envia CPU a Memoria e indica el envio de la configuracion para traducir direcciones logicas a fisicas
-	ACCESO_TABLA_PRIMER_NIVEL,		// Protocolo que envia CPU/MMU a Memoria para pedir la direccion de la tabla de segundo nivel
-	ACCESO_TABLA_SEGUNDO_NIVEL,		// Protocolo que envia CPU/MMU a Memoria para pedir el marco de la pagina en la tabla de segundo nivel
 	LEER_MEMORIA,					// Protocolo que envia CPU/MMU a Memoria para pedir el valor almacenado en memoria
 	ESCRIBIR_MEMORIA,				// Protocolo que envia CPU/MMU a Memoria para escribir en memoria un valor
 	MEMORIA_MODIFICADA_OK			// Protocolo que envia Memoria a CPU/MMU para indicar que se escribio en memoria

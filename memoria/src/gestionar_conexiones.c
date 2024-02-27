@@ -24,7 +24,13 @@ void escuchar_kernel(void) {
 		switch(paquete->codigo_operacion) {
 
 		case INICIALIZACION_DE_PROCESO:
-			uint32_t tamanio_proceso = recibir_proceso(paquete);
+			recibir_proceso(paquete);
+			break;
+		case FINALIZACION_DE_PROCESO:
+			eliminar_estructuras(paquete);
+			break;
+		case PAGE_FAULT:
+			manejar_page_fault(paquete);
 			break;
 		default:
 			;
@@ -37,6 +43,11 @@ void escuchar_kernel(void) {
 void escuchar_cpu(void) {
 	t_paquete* paquete;
 	t_contexto_ejecucion *ce;
+
+	paquete = crear_paquete(HANDSHAKE_INICIAL, buffer_vacio());
+	agregar_a_paquete(paquete, &memoria_config->TAM_PAGINA, sizeof(int));
+	enviar_paquete(paquete, sockets_m.s_cpu);
+	eliminar_paquete(paquete);
 
 	while(1) {
 		ce = malloc(sizeof(t_contexto_ejecucion));
@@ -51,6 +62,7 @@ void escuchar_cpu(void) {
 
 			enviar_instruccion(ce, paquete);
 			break;
+
 		default:
 			;
 		}
@@ -58,33 +70,7 @@ void escuchar_cpu(void) {
 	}
 }
 
-/*
-void procesar_conexiones(t_cliente *datos_cliente) {
-	
-	t_paquete *paquete = datos_cliente->paquete;
-	switch (paquete->codigo_operacion) {
-		// KERNEL
-		case INICIALIZACION_DE_PROCESO:
-			uint32_t tamanio_proceso = recibir_proceso(paquete);
-			//log_info(memoria_logger, "Inicializando estructuras de PID[%d]...", pcb->id);
-			//swap_crear_archivo(pcb->id, pcb->tamanio_proceso);
-			//uint32_t tabla_primer_nivel = crear_tablas_de_paginacion(pcb->id);
-			//enviar_direccion_tabla_primer_nivel(datos_cliente->socket, tabla_primer_nivel);
-
-			//eliminar_pcb(pcb);
-			break;
-
-		case SOLICITAR_INSTRUCCION:
-			enviar_instruccion(sockets_m.s_cpu, paquete);
-			break;
-		default:
-			log_error(memoria_logger, "Protocolo invalido.");
-			break;
-	}
-	//eliminar_paquete(paquete);
-}
-*/
-uint32_t recibir_proceso(t_paquete* paquete){
+void recibir_proceso(t_paquete* paquete){
 	t_list* datos = deserealizar_paquete(paquete);
 	uint32_t pid = *(uint32_t *)list_get(datos, 0);
 	uint32_t tamanio_proceso = *(uint32_t *)list_get(datos, 1);
@@ -98,9 +84,11 @@ uint32_t recibir_proceso(t_paquete* paquete){
 
 	list_destroy_and_destroy_elements(datos, free);
 
-	//print_instrucciones(memoria_logger, instrucciones);
+	uint32_t cant_paginas_proceso = ceil((double)(tamanio_proceso / memoria_config->TAM_PAGINA));
+	t_tabla_pagina *tabla_pag_proceso = crear_tp(pid, cant_paginas_proceso);
+	list_add(tablas_de_paginas, tabla_pag_proceso);
 
-	return tamanio_proceso;
+	solicitar_espacio_swap(pid, cant_paginas_proceso);
 }
 
 void enviar_instruccion(t_contexto_ejecucion* ce, t_paquete* paquete){
@@ -108,45 +96,38 @@ void enviar_instruccion(t_contexto_ejecucion* ce, t_paquete* paquete){
 	t_instruccion* inst = (t_instruccion*)list_get(instrucciones, ce->program_counter);
 	//print_instrucciones(memoria_logger, instrucciones);
 	paquete = serializar_instruccion(inst, INSTRUCCION);
-	enviar_paquete(paquete, sockets_m.s_cpu);
+	if(inst->identificador == MOV_IN || inst->identificador == MOV_OUT) {
+		enviar_paquete(paquete, sockets_m.s_cpu);
+		eliminar_paquete(paquete);
+		paquete = recibir_paquete(sockets_m.s_cpu);
+		retornar_nro_frame(paquete);
+	}
+	else {
+		enviar_paquete(paquete, sockets_m.s_cpu);
+	}
 	eliminar_paquete(paquete);
 }
 
-void enviar_direccion_tabla_primer_nivel(int socket_fd, uint32_t direccion) {
-	enviar_datos(socket_fd, &direccion, sizeof(uint32_t));
-}
+void solicitar_espacio_swap(uint32_t pid, uint32_t cantidad_paginas_proceso) {
+	t_paquete *paquete = crear_paquete(INICIALIZACION_DE_PROCESO, buffer_vacio());
 
-void informar_estado_proceso(int socket_fd, t_protocolo protocolo) {
-	enviar_datos(socket_fd, &protocolo, sizeof(t_protocolo));
-}
-
-void enviar_estructura_traductora(int socket_fd, t_traductor *traductor) {
-	t_paquete *paquete = serializar_traductor(traductor, HANDSHAKE_INICIAL);
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_paquete(paquete, socket_fd);
+	agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
+	agregar_a_paquete(paquete, &cantidad_paginas_proceso, sizeof(uint32_t));
+	enviar_paquete(paquete, sockets_m.s_fs);
 	eliminar_paquete(paquete);
-}
 
-void enviar_direccion_tabla_segundo_nivel(int socket_fd, uint32_t direccion) {
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_datos(socket_fd, &direccion, sizeof(uint32_t));
-}
+	paquete = recibir_paquete(sockets_m.s_fs);
+	t_list *valores = deserializar_valores_enteros(paquete); //posiciones de bloques en swap
 
-void enviar_numero_marco_de_pagina(int socket_fd, uint32_t numero) {
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_datos(socket_fd, &numero, sizeof(uint32_t));
-}
+	t_tabla_pagina *tp = buscar_tabla_proceso(pid);
 
-void enviar_valor_leido_de_memoria(int socket_fd, uint32_t valor) {
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_datos(socket_fd, &valor, sizeof(uint32_t));
+	int i = 0, cant_entradas = list_size(tp->entradas);
+	while(i < cant_entradas) {
+		t_entrada_tabla_pagina* etp = (t_entrada_tabla_pagina*)list_get(tp->entradas, i);
+		etp->posicion_en_swap = *(uint32_t*)list_get(valores, i);
+	}
+	list_destroy_and_destroy_elements(valores, free);
 }
-
-void informar_escritura_realizada(int socket_fd, t_protocolo protocolo) {
-	retardo_respuesta(memoria_config->RETARDO_RESPUESTA);
-	enviar_datos(socket_fd, &protocolo, sizeof(t_protocolo));
-}
-
 
 static void retardo_respuesta(uint32_t tiempo) {
 	usleep(tiempo * 1000);

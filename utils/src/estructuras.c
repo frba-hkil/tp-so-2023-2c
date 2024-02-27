@@ -9,8 +9,14 @@ t_instruccion *crear_instruccion(t_op_code op_code, char* primer_operando, char*
 	return instruccion;
 }
 
-void eliminar_instrucciones(t_list *instrucciones) {
-	list_destroy_and_destroy_elements(instrucciones, free);
+void eliminar_instrucciones(void *instrucciones) {
+	t_list *_instrucciones = (t_list*) instrucciones;
+	void eliminar_instruccion(t_instruccion* inst) {
+			free(inst->primer_operando);
+			free(inst->segundo_operando);
+			free(inst);
+	}
+	list_destroy_and_destroy_elements(_instrucciones, eliminar_instruccion);
 }
 
 void eliminar_contexto_ejecucion(t_contexto_ejecucion* ce) {
